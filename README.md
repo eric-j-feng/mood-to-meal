@@ -1,0 +1,2 @@
+# rez-bot
+Reservation bot

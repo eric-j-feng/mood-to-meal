@@ -1,24 +1,47 @@
-// lib/weatherService.ts
 import dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
 
-export async function getWeather() {
-    try {
-    console.log("Starting the weather service...");
+// Function to fetch the latitude and longitude
+export async function getCoordinates() {
+  try {
+    console.log("Fetching coordinates...");
     const apikey = process.env.OPENWEATHERMAP_API_KEY;
-    console.log("API Key:", apikey); // Log the API key to check if it's set correctly
-    const lat = 36.1627;
-    const lon = 86.7816;
-    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=bee76c71adbb1cc04d3bf0445c032ab3`;
-    // const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&appid=bee76c71adbb1cc04d3bf0445c032ab3`;
-    // const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apikey}`;
-    // const url = `http://api.openweathermap.org/geo/1.0/direct?q=Nashville&limit=2&appid=bee76c71adbb1cc04d3bf0445c032ab3`;
-
-    const response = await fetch(url);
+    console.log("API Key:", apikey);
+    
+    const geocodeUrl = `http://api.openweathermap.org/geo/1.0/direct?q=Nashville,US-TN&limit=1&appid=bee76c71adbb1cc04d3bf0445c032ab3`;
+    const response = await fetch(geocodeUrl);
     if (!response.ok) {
-        const errorDetails = await response.text(); // Get the error message from the server
-        throw new Error(`Network response was not ok: ${response.status} - ${errorDetails}`);
+      const errorDetails = await response.text();
+      throw new Error(`Geocoding response was not ok: ${response.status} - ${errorDetails}`);
     }
+
+    const data = await response.json();
+    const latFetched = data[0]?.lat;
+    const lonFetched = data[0]?.lon;
+
+    return { latFetched, lonFetched };
+  } catch (error) {
+    console.error("Error fetching coordinates:", error);
+    throw error;
+  }
+}
+
+// Function to fetch weather data using the lat/lon
+export async function getWeather() {
+  try {
+    const { latFetched, lonFetched } = await getCoordinates();
+    console.log("Using coordinates:", latFetched, lonFetched);
+    
+    const apikey = process.env.OPENWEATHERMAP_API_KEY;
+    console.log("API Key:", apikey);
+    
+    const weatherUrl = `http://api.openweathermap.org/data/2.5/weather?lat=${latFetched}&lon=${lonFetched}&appid=bee76c71adbb1cc04d3bf0445c032ab3&units=imperial`;
+    const response = await fetch(weatherUrl);
+    if (!response.ok) {
+      const errorDetails = await response.text();
+      throw new Error(`Weather response was not ok: ${response.status} - ${errorDetails}`);
+    }
+
     const data = await response.json();
     // Categorize weather data
     const temperature = data.main.temp;
@@ -39,48 +62,3 @@ export async function getWeather() {
     throw error;
   }
 }
-
-// CHANGE TO THIS WHEN WE HAVE THE LOCATION
-
-// function getUserLocation(): Promise<{ lat: number, lon: number }> {
-//     return new Promise((resolve, reject) => {
-//         if (navigator.geolocation) {
-//             navigator.geolocation.getCurrentPosition(
-//                 (position) => {
-//                     resolve({
-//                         lat: position.coords.latitude,
-//                         lon: position.coords.longitude
-//                     });
-//                 },
-//                 (error) => {
-//                     reject(error);
-//                 }
-//             );
-//         } else {
-//             reject(new Error("Geolocation is not supported by this browser."));
-//         }
-//     });
-// }
-
-// export async function getWeather() {
-//     try {
-//         console.log("Starting the weather service...");
-//         const apikey = process.env.OPENWEATHERMAP_API_KEY;
-//         console.log("API Key:", apikey); // Log the API key to check if it's set correctly
-
-//         const { lat, lon } = await getUserLocation();
-//         console.log(`User's location: lat=${lat}, lon=${lon}`);
-
-//         const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&appid=${apikey}`;
-//         const response = await fetch(url);
-//         if (!response.ok) {
-//             const errorDetails = await response.text(); // Get the error message from the server
-//             throw new Error(`Network response was not ok: ${response.status} - ${errorDetails}`);
-//         }
-//         const data = await response.json();
-//         return data;
-//     } catch (error) {
-//         console.error("Error fetching forecast data:", error);
-//         throw error;
-//     }
-// }

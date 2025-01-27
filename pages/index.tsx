@@ -19,7 +19,7 @@ export const getServerSideProps: GetServerSideProps<
   ConnectionStatus
 > = async () => {
   try {
-    await client.connect(); // `await client.connect()` will use the default database passed in the MONGODB_URI
+    await client.connect(); 
     return {
       props: { isConnected: true },
     };
@@ -68,7 +68,7 @@ export default function Home({
         {weather ? (
           <div>
             <h4>Weather in {weather.cityName}:</h4>
-            <p>Temperature: {weather.temperature}°C</p>
+            <p>Temperature: {weather.temperature}°F</p>
             <p>Description: {weather.weatherDescription}</p>
             <p>Humidity: {weather.humidity}%</p>
             <p>Wind Speed: {weather.windSpeed} m/s</p>

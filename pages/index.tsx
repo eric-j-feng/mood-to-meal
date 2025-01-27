@@ -3,6 +3,11 @@ import Link from "next/link";
 import { Inter } from "next/font/google";
 import client from "@/lib/mongodb";
 import type { InferGetServerSidePropsType, GetServerSideProps } from "next";
+import { useEffect, useState } from 'react';
+import { getWeather } from '../lib/weatherService';
+import dotenv from 'dotenv';
+
+dotenv.config({ path: '.env.local' });
 
 type ConnectionStatus = {
   isConnected: boolean;
@@ -29,6 +34,29 @@ export const getServerSideProps: GetServerSideProps<
 export default function Home({
   isConnected,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
+  type WeatherData = {
+    temperature: number;
+    weatherDescription: string;
+    humidity: number;
+    windSpeed: number;
+    cityName: string;
+  };
+
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+
+  useEffect(() => {
+    const fetchWeather = async () => {
+      try {
+        const data = await getWeather();
+        setWeather(data);
+      } catch (error) {
+        console.error('Error fetching weather:', error);
+      }
+    };
+
+    fetchWeather();
+  },);
+  
   return (
     <main
       className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
@@ -37,10 +65,19 @@ export default function Home({
         <h2>Welcome to Mood to Meal</h2>
         <h3>Set your preferences: </h3>
         <h4> Mood: </h4>
-        <h4> Weather: </h4>
-        <h4> Dietary Restrictions: </h4>
-        <h4> Cook Time: </h4>
+        {weather ? (
+          <div>
+            <h4>Weather in {weather.cityName}:</h4>
+            <p>Temperature: {weather.temperature}°C</p>
+            <p>Description: {weather.weatherDescription}</p>
+            <p>Humidity: {weather.humidity}%</p>
+            <p>Wind Speed: {weather.windSpeed} m/s</p>
+          </div>
+        ) : (
+          <h4>Loading weather data...</h4>
+        )}
       </div>
     </main>
   );
 }
+  

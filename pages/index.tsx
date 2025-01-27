@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Inter } from "next/font/google";
 import client from "@/lib/mongodb";
+import Recipes from "@/components/recipes";
 import type { InferGetServerSidePropsType, GetServerSideProps } from "next";
 
 type ConnectionStatus = {
@@ -41,6 +42,12 @@ export default function Home({
         <h4> Dietary Restrictions: </h4>
         <h4> Cook Time: </h4>
       </div>
+      {/* Include the Recipes Component */}
+      <div className="w-full max-w-5xl">
+        <h2 className="text-2xl font-semibold mb-4">Pasta Recipes</h2>
+        <Recipes />
+      </div>
     </main>
   );
+
 }

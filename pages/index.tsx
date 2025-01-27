@@ -45,7 +45,6 @@ export default function Home({
   const [selectedCookTime, setSelectedCookTime] = useState<string | null>(null);
   const [showRecipes, setShowRecipes] = useState(false);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
-  const [showRecipes, setShowRecipes] = useState(false);
 
   const handleCitySelect = (city: string) => {
     setSelectedCity(city);

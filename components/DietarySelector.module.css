@@ -1,0 +1,30 @@
+.dietaryContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+  justify-items: center;
+  margin: 20px 0;
+}
+
+.dietaryButton {
+  padding: 12px 24px;
+  color: black;
+  font-size: 16px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  background-color: white;
+  cursor: pointer;
+  transition: background-color 0.3s, border-color 0.3s, transform 0.2s;
+}
+
+.dietaryButton:hover {
+  background-color: #f8f8f8;
+  border-color: #28a745; /* Green color to signify a dietary selection */
+}
+
+.dietaryButton.active {
+  background-color: #28a745;
+  color: white;
+  font-weight: bold;
+  transform: scale(1.05);
+}

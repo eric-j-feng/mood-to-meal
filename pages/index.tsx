@@ -11,9 +11,7 @@ import CitySelector from "@/components/CitySelector";
 import StateSelector from "@/components/StateSelector";
 import CookTimeSelector from "@/components/CookTimeSelector";
 import MoodSelector from "@/components/MoodSelector";
-
 dotenv.config({ path: '.env.local' });
-import { useState } from "react";
 
 type ConnectionStatus = {
   isConnected: boolean;

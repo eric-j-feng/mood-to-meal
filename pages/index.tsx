@@ -99,76 +99,81 @@ export default function Home({
   });
 
   return (
-    <main
-      className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
-    >
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <h2>Welcome to Mood to Meal</h2>
-        <h3>Set your preferences: </h3>
-        <h4> Mood: </h4>
-        {weather ? (
-          <div>
-            <h4>Weather in {weather.cityName}:</h4>
-            <p>Temperature: {weather.temperature}°F</p>
-            <p>Description: {weather.weatherDescription}</p>
-            <p>Humidity: {weather.humidity}%</p>
-            <p>Wind Speed: {weather.windSpeed} m/s</p>
-          </div>
-        ) : (
-          <h4>Loading weather data...</h4>
-        )}
-      </div>
+    <main className={`flex flex-col items-center min-h-screen p-8 ${inter.className}`}>
+
+      {/* header! */}
+    <header className="w-full max-w-5xl text-center mb-12">
+        <h1 className="text-4xl font-bold text-blue-600 mb-4">Mood to Meal</h1>
+        <p className="text-gray-700 text-lg">
+          Select your mood and preferences to discover tailored recipes.
+        </p>
+      </header>
+
+      {/* All input selection */}
 
       {!showRecipes ? (
-        // Inputs and Button
-        <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-          <h2 className="text-lg text-red-500">Welcome to Mood to Meal</h2>
-          <h3>Set your preferences:</h3>
+      
+        <div className="w-full max-w-5xl bg-white shadow-lg rounded-2xl p-6 mb-8">
 
-          <h4>Choose your primary mood:</h4>
-
+          {/* Mood Selection */}
+          <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
+          <h4 className="text-xl font-semibold text-gray-800 mb-2">Choose your primary mood:</h4>
+     
           <MoodSelector onMoodSelect={handleMoodSelect} />
-          {selectedMood && <p>You selected: {selectedMood}</p>}
+          </div>
+  
 
+          {/* Weather Selection */}
           {weather ? (
-            <div>
-              <h4>Weather in {weather.cityName}:</h4>
-              <p>Temperature: {weather.temperature}°F</p>
-              <p>Description: {weather.weatherDescription}</p>
-              <p>Humidity: {weather.humidity}%</p>
-              <p>Wind Speed: {weather.windSpeed} m/s</p>
+            <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
+              {/* <h4 className="text-xl font-semibold text-gray-800 mb-2">Weather in Nashville{weather.cityName}:</h4> */}
+              <h4 className="text-xl font-semibold text-gray-800 mb-2"> Weather in Nashville</h4>
+              <p className="text-gray-600">Temperature: {weather.temperature}°F</p>
+              <p className="text-gray-600">Description: {weather.weatherDescription}</p>
+              <p className="text-gray-600">Humidity: {weather.humidity}%</p>
+              <p className="text-gray-600">Wind Speed: {weather.windSpeed} m/s</p>
             </div>
           ) : (
-            <h4>Loading weather data...</h4>
-          )}
-          <h4>Dietary Restrictions:</h4>
-          <DietarySelector
-            selectedRestrictions={dietaryRestrictions}
-            onChange={handleDietaryChange}
-          />
-          {dietaryRestrictions.length > 0 && (
-            <p>You selected: {dietaryRestrictions.join(", ")}</p>
+            <h4  className="bg-white shadow-lg rounded-2xl p-6 mb-8">Loading weather data...</h4>
           )}
 
-          <h4>Cook Time:</h4>
-          {/* City Selector */}
-          <h4>Enter your city:</h4>
-          <CitySelector city={selectedCity} setCity={handleCitySelect} />
-          {selectedCity && <p>You selected: {selectedCity}</p>}
+           {/* City & State Selector */}
+           <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
+            <h4 className="text-xl font-semibold text-gray-800 mb-4">Enter your city and state:</h4>
+            <CitySelector city={selectedCity} setCity={handleCitySelect} />
+            {selectedCity && <p className="mt-4 text-gray-800">Your City: {selectedCity}</p>} 
 
-          {/* State Selector */}
-          <h4>Enter your state:</h4>
-          <StateSelector state={selectedState} setState={handleStateSelect} />
-          {selectedState && <p>You selected: {selectedState}</p>}
+            <StateSelector state={selectedState} setState={handleStateSelect} />
+            {selectedState && <p className="mt-4 text-gray-800">Your State: {selectedState}</p>}
+           </div>
+          
+
+
+          {/* Dietary Selection */}
+          <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
+            <h4 className="text-xl font-semibold text-gray-800 mb-4">Dietary Restrictions:</h4>
+            <DietarySelector
+              selectedRestrictions={dietaryRestrictions}
+              onChange={handleDietaryChange}
+            />
+            {dietaryRestrictions.length > 0 && (
+              <p className="mt-4 text-green-600">You selected: {dietaryRestrictions.join(", ")}</p>
+            )}
+          </div>
+          
 
           {/* Cook Time Selector */}
-          <h4>Enter your cook time (in minutes):</h4>
-          <CookTimeSelector
-            cookTime={selectedCookTime}
-            setCookTime={handleCookTimeSelect}
-          />
-          {selectedCookTime && <p>You selected: {selectedCookTime} minutes</p>}
-
+          <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
+          <h4 className="text-xl font-semibold text-gray-800 mb-4">Cook Time:</h4>
+        
+         <h4>Enter your cook time (in minutes):</h4>
+         <CookTimeSelector
+           cookTime={selectedCookTime}
+           setCookTime={handleCookTimeSelect}
+         />
+         {selectedCookTime && <p>Your Cook Time: {selectedCookTime} minutes</p>}
+          </div>
+         
           {/* Submit Button */}
           <button
             onClick={handleSubmit}

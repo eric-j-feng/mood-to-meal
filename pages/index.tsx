@@ -130,7 +130,16 @@ export default function Home({
      
           <MoodSelector onMoodSelect={handleMoodSelect} />
           </div>
-  
+        
+          {/* City & State Selector */}
+           <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
+            <h4 className="text-xl font-semibold text-gray-800 mb-4">Enter your city and state:</h4>
+            <CitySelector city={selectedCity} setCity={handleCitySelect} />
+            {selectedCity && <p className="mt-4 text-gray-800">Your City: {selectedCity}</p>} 
+
+            <StateSelector state={selectedState} setState={handleStateSelect} />
+            {selectedState && <p className="mt-4 text-gray-800">Your State: {selectedState}</p>}
+           </div>
 
           {/* Weather Selection */}
           {weather ? (
@@ -143,21 +152,9 @@ export default function Home({
               <p className="text-gray-600">Wind Speed: {weather.windSpeed} m/s</p>
             </div>
           ) : (
-            <h4  className="bg-white shadow-lg rounded-2xl p-6 mb-8">Loading weather data...</h4>
+            <h4  className="bg-white shadow-lg rounded-2xl p-6 mb-8">Enter City and State to get Weather data</h4>
           )}
-
-           {/* City & State Selector */}
-           <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
-            <h4 className="text-xl font-semibold text-gray-800 mb-4">Enter your city and state:</h4>
-            <CitySelector city={selectedCity} setCity={handleCitySelect} />
-            {selectedCity && <p className="mt-4 text-gray-800">Your City: {selectedCity}</p>} 
-
-            <StateSelector state={selectedState} setState={handleStateSelect} />
-            {selectedState && <p className="mt-4 text-gray-800">Your State: {selectedState}</p>}
-           </div>
           
-
-
           {/* Dietary Selection */}
           <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
             <h4 className="text-xl font-semibold text-gray-800 mb-4">Dietary Restrictions:</h4>

@@ -86,15 +86,24 @@ export default function Home({
   };
 
   useEffect(() => {
+    if (selectedCity && selectedState) {
+      getWeather(selectedCity, selectedState);
+    }
+  }, [selectedCity, selectedState]);
+  
+  useEffect(() => {
     const fetchWeather = async () => {
       try {
-        const data = await getWeather();
+        if (selectedCity && selectedState) {
+        const data = await getWeather(selectedCity, selectedState);
         setWeather(data);
+        } else {
+          console.log("City and state not selected");
+        }
       } catch (error) {
         console.error("Error fetching weather:", error);
       }
     };
-
     fetchWeather();
   });
 
@@ -127,7 +136,7 @@ export default function Home({
           {weather ? (
             <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
               {/* <h4 className="text-xl font-semibold text-gray-800 mb-2">Weather in Nashville{weather.cityName}:</h4> */}
-              <h4 className="text-xl font-semibold text-gray-800 mb-2"> Weather in Nashville</h4>
+              <h4 className="text-xl font-semibold text-gray-800 mb-2"> Weather in {weather.cityName}</h4>
               <p className="text-gray-600">Temperature: {weather.temperature}°F</p>
               <p className="text-gray-600">Description: {weather.weatherDescription}</p>
               <p className="text-gray-600">Humidity: {weather.humidity}%</p>

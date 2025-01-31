@@ -2,13 +2,13 @@ import dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
 
 // Function to fetch the latitude and longitude
-export async function getCoordinates() {
+export async function getCoordinates(selectedCity: string | null, selectedState: string | null) {
   try {
     console.log("Fetching coordinates...");
     const apikey = process.env.OPENWEATHERMAP_API_KEY;
     console.log("API Key:", apikey);
     
-    const geocodeUrl = `http://api.openweathermap.org/geo/1.0/direct?q=Nashville,US-TN&limit=1&appid=bee76c71adbb1cc04d3bf0445c032ab3`;
+    const geocodeUrl = `http://api.openweathermap.org/geo/1.0/direct?q=${selectedCity},${selectedState}&limit=1&appid=bee76c71adbb1cc04d3bf0445c032ab3`;
     const response = await fetch(geocodeUrl);
     if (!response.ok) {
       const errorDetails = await response.text();
@@ -27,9 +27,9 @@ export async function getCoordinates() {
 }
 
 // Function to fetch weather data using the lat/lon
-export async function getWeather() {
+export async function getWeather(selectedCity: string | null, selectedState: string | null){
   try {
-    const { latFetched, lonFetched } = await getCoordinates();
+    const { latFetched, lonFetched } = await getCoordinates(selectedCity, selectedState);
     console.log("Using coordinates:", latFetched, lonFetched);
     
     const apikey = process.env.OPENWEATHERMAP_API_KEY;

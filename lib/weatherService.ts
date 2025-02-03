@@ -10,11 +10,9 @@ export async function getCoordinates(selectedCity: string | null, selectedState:
     // URL encode the city and state parameters
     const encodedCity = encodeURIComponent(selectedCity.trim());
     const encodedState = encodeURIComponent(selectedState.trim());
-    // const apikey = process.env.OPENWEATHERMAP_API_KEY;
+    const apikey = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY;
 
-    
-    const geocodeUrl = `http://api.openweathermap.org/geo/1.0/direct?q=${encodedCity},${encodedState},US&limit=1&appid=bee76c71adbb1cc04d3bf0445c032ab3`;
-    // const geocodeUrl = `http://api.openweathermap.org/geo/1.0/direct?q=${encodedCity},${encodedState}&limit=1&appid=${apikey}`;
+    const geocodeUrl = `http://api.openweathermap.org/geo/1.0/direct?q=${encodedCity},${encodedState},US&limit=1&appid=${apikey}`;
     const response = await fetch(geocodeUrl);
     
     if (!response.ok) {
@@ -50,9 +48,10 @@ export async function getWeather(selectedCity: string | null, selectedState: str
     }
     
     const { latFetched, lonFetched } = coords;
+    const apikey = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY;
     console.log("Using coordinates:", latFetched, lonFetched);
     
-    const weatherUrl = `http://api.openweathermap.org/data/2.5/weather?lat=${latFetched}&lon=${lonFetched}&appid=bee76c71adbb1cc04d3bf0445c032ab3&units=imperial`;
+    const weatherUrl = `http://api.openweathermap.org/data/2.5/weather?lat=${latFetched}&lon=${lonFetched}&appid=${apikey}&units=imperial`;
     const response = await fetch(weatherUrl);
     
     if (!response.ok) {

@@ -1,23 +1,39 @@
-import dotenv from 'dotenv';
-dotenv.config({ path: '.env.local' });
-
-// Function to fetch the latitude and longitude
 export async function getCoordinates(selectedCity: string | null, selectedState: string | null) {
   try {
+    // Validate inputs
+    if (!selectedCity?.trim() || !selectedState?.trim()) {
+      return null;  // Return null instead of throwing error to handle partial input
+    }
+
     console.log("Fetching coordinates...");
-    const apikey = process.env.OPENWEATHERMAP_API_KEY;
-    console.log("API Key:", apikey);
     
-    const geocodeUrl = `http://api.openweathermap.org/geo/1.0/direct?q=${selectedCity},${selectedState}&limit=1&appid=bee76c71adbb1cc04d3bf0445c032ab3`;
+    // URL encode the city and state parameters
+    const encodedCity = encodeURIComponent(selectedCity.trim());
+    const encodedState = encodeURIComponent(selectedState.trim());
+    // const apikey = process.env.OPENWEATHERMAP_API_KEY;
+
+    
+    const geocodeUrl = `http://api.openweathermap.org/geo/1.0/direct?q=${encodedCity},${encodedState},US&limit=1&appid=bee76c71adbb1cc04d3bf0445c032ab3`;
+    // const geocodeUrl = `http://api.openweathermap.org/geo/1.0/direct?q=${encodedCity},${encodedState}&limit=1&appid=${apikey}`;
     const response = await fetch(geocodeUrl);
+    
     if (!response.ok) {
       const errorDetails = await response.text();
       throw new Error(`Geocoding response was not ok: ${response.status} - ${errorDetails}`);
     }
 
     const data = await response.json();
+    
+    if (!data || data.length === 0) {
+      return null;
+    }
+
     const latFetched = data[0]?.lat;
     const lonFetched = data[0]?.lon;
+
+    if (!latFetched || !lonFetched) {
+      return null;
+    }
 
     return { latFetched, lonFetched };
   } catch (error) {
@@ -26,36 +42,32 @@ export async function getCoordinates(selectedCity: string | null, selectedState:
   }
 }
 
-// Function to fetch weather data using the lat/lon
-export async function getWeather(selectedCity: string | null, selectedState: string | null){
+export async function getWeather(selectedCity: string | null, selectedState: string | null) {
   try {
-    const { latFetched, lonFetched } = await getCoordinates(selectedCity, selectedState);
-    console.log("Using coordinates:", latFetched, lonFetched);
+    const coords = await getCoordinates(selectedCity, selectedState);
+    if (!coords) {
+      return null;  // Return null if coordinates aren't available
+    }
     
-    const apikey = process.env.OPENWEATHERMAP_API_KEY;
-    console.log("API Key:", apikey);
+    const { latFetched, lonFetched } = coords;
+    console.log("Using coordinates:", latFetched, lonFetched);
     
     const weatherUrl = `http://api.openweathermap.org/data/2.5/weather?lat=${latFetched}&lon=${lonFetched}&appid=bee76c71adbb1cc04d3bf0445c032ab3&units=imperial`;
     const response = await fetch(weatherUrl);
+    
     if (!response.ok) {
       const errorDetails = await response.text();
       throw new Error(`Weather response was not ok: ${response.status} - ${errorDetails}`);
     }
 
     const data = await response.json();
-    // Categorize weather data
-    const temperature = data.main.temp;
-    const weatherDescription = data.weather[0].description;
-    const humidity = data.main.humidity;
-    const windSpeed = data.wind.speed;
-    const cityName = data.name;
     
     return {
-      temperature,
-      weatherDescription,
-      humidity,
-      windSpeed,
-      cityName,
+      temperature: data.main.temp,
+      weatherDescription: data.weather[0].description,
+      humidity: data.main.humidity,
+      windSpeed: data.wind.speed,
+      cityName: data.name,
     };
   } catch (error) {
     console.error("Error fetching forecast data:", error);

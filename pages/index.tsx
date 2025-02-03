@@ -86,12 +86,6 @@ export default function Home({
   };
 
   useEffect(() => {
-    if (selectedCity && selectedState) {
-      getWeather(selectedCity, selectedState);
-    }
-  }, [selectedCity, selectedState]);
-  
-  useEffect(() => {
     const fetchWeather = async () => {
       try {
         if (selectedCity && selectedState) {
@@ -105,7 +99,7 @@ export default function Home({
       }
     };
     fetchWeather();
-  });
+  }, [selectedCity, selectedState]); 
 
   return (
     <main className={`flex flex-col items-center min-h-screen p-8 ${inter.className}`}>

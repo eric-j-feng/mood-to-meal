@@ -97,15 +97,18 @@ export default function Home({
   useEffect(() => {
     const fetchWeather = async () => {
       try {
-        const data = await getWeather();
+        if (selectedCity && selectedState) {
+        const data = await getWeather(selectedCity, selectedState);
         setWeather(data);
+        } else {
+          console.log("City and state not selected");
+        }
       } catch (error) {
         console.error("Error fetching weather:", error);
       }
     };
-
     fetchWeather();
-  });
+  }, [selectedCity, selectedState]); 
 
   return (
     <main className={`flex flex-col items-center min-h-screen p-8 ${inter.className}`}>
@@ -125,8 +128,22 @@ export default function Home({
         {/* All input selection */}
 
         {!showRecipes ? (
+          {/* Mood Selection */}
+          <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
+          <h4 className="text-xl font-semibold text-gray-800 mb-2">Choose your primary mood:</h4>
+     
+          <MoodSelector onMoodSelect={handleMoodSelect} />
+          </div>
         
-          <div className="w-full max-w-5xl bg-white shadow-lg rounded-2xl p-6 mb-8">
+          {/* City & State Selector */}
+           <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
+            <h4 className="text-xl font-semibold text-gray-800 mb-4">Enter your city and state:</h4>
+            <CitySelector city={selectedCity} setCity={handleCitySelect} />
+            {selectedCity && <p className="mt-4 text-gray-800">Your City: {selectedCity}</p>} 
+
+            <StateSelector state={selectedState} setState={handleStateSelect} />
+            {selectedState && <p className="mt-4 text-gray-800">Your State: {selectedState}</p>}
+           </div>
 
             {/* Mood Selection */}
             <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
@@ -134,7 +151,6 @@ export default function Home({
       
             <MoodSelector onMoodSelect={handleMoodSelect} />
             </div>
-    
 
             {/* Weather Selection */}
             {weather ? (
@@ -171,8 +187,7 @@ export default function Home({
               {dietaryRestrictions.length > 0 && (
                 <p className="mt-4 text-green-600">You selected: {dietaryRestrictions.join(", ")}</p>
               )}
-            </div>
-            
+            </div>  
 
             {/* Cook Time Selector */}
             <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">

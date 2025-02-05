@@ -13,6 +13,7 @@
     "@opentelemetry/semantic-conventions": "^1.28.0",
     "axios": "^1.7.9",
     "dotenv": "^16.4.7",
+    "firebase": "^11.2.0",
     "mongodb": "^6.5.0",
     "next": "latest",
     "react": "^18",

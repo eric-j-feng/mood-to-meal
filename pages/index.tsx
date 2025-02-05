@@ -88,15 +88,18 @@ export default function Home({
   useEffect(() => {
     const fetchWeather = async () => {
       try {
-        const data = await getWeather();
+        if (selectedCity && selectedState) {
+        const data = await getWeather(selectedCity, selectedState);
         setWeather(data);
+        } else {
+          console.log("City and state not selected");
+        }
       } catch (error) {
         console.error("Error fetching weather:", error);
       }
     };
-
     fetchWeather();
-  });
+  }, [selectedCity, selectedState]); 
 
   return (
     <main className={`flex flex-col items-center min-h-screen p-8 ${inter.className}`}>
@@ -121,23 +124,8 @@ export default function Home({
      
           <MoodSelector onMoodSelect={handleMoodSelect} />
           </div>
-  
-
-          {/* Weather Selection */}
-          {weather ? (
-            <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
-              {/* <h4 className="text-xl font-semibold text-gray-800 mb-2">Weather in Nashville{weather.cityName}:</h4> */}
-              <h4 className="text-xl font-semibold text-gray-800 mb-2"> Weather in Nashville</h4>
-              <p className="text-gray-600">Temperature: {weather.temperature}°F</p>
-              <p className="text-gray-600">Description: {weather.weatherDescription}</p>
-              <p className="text-gray-600">Humidity: {weather.humidity}%</p>
-              <p className="text-gray-600">Wind Speed: {weather.windSpeed} m/s</p>
-            </div>
-          ) : (
-            <h4  className="bg-white shadow-lg rounded-2xl p-6 mb-8">Loading weather data...</h4>
-          )}
-
-           {/* City & State Selector */}
+        
+          {/* City & State Selector */}
            <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
             <h4 className="text-xl font-semibold text-gray-800 mb-4">Enter your city and state:</h4>
             <CitySelector city={selectedCity} setCity={handleCitySelect} />
@@ -146,9 +134,21 @@ export default function Home({
             <StateSelector state={selectedState} setState={handleStateSelect} />
             {selectedState && <p className="mt-4 text-gray-800">Your State: {selectedState}</p>}
            </div>
+
+          {/* Weather Selection */}
+          {weather ? (
+            <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
+              {/* <h4 className="text-xl font-semibold text-gray-800 mb-2">Weather in Nashville{weather.cityName}:</h4> */}
+              <h4 className="text-xl font-semibold text-gray-800 mb-2"> Weather in {weather.cityName}</h4>
+              <p className="text-gray-600">Temperature: {weather.temperature}°F</p>
+              <p className="text-gray-600">Description: {weather.weatherDescription}</p>
+              <p className="text-gray-600">Humidity: {weather.humidity}%</p>
+              <p className="text-gray-600">Wind Speed: {weather.windSpeed} m/s</p>
+            </div>
+          ) : (
+            <h4  className="bg-white shadow-lg rounded-2xl p-6 mb-8">Enter City and State to get Weather data</h4>
+          )}
           
-
-
           {/* Dietary Selection */}
           <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
             <h4 className="text-xl font-semibold text-gray-800 mb-4">Dietary Restrictions:</h4>

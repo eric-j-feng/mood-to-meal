@@ -1,58 +1,79 @@
-"use client";
-import React, {use, useEffect, useState} from "react";
-import { getAuth, signOut, onAuthStateChanged } from "@firebase/auth";
-import { useRouter } from "next/router";
+'use client';
+
+import { useState, useEffect } from "react";
 import app from "@/auth/firebase";
+import { getAuth } from "@firebase/auth";
+import { useRouter } from "next/router";
+import { signInWithPopup, GoogleAuthProvider } from "@firebase/auth";
+import PostLoginReal from "./logout";
 
-const PostLoginReal = () => {
-    const auth = getAuth();
-    const router = useRouter();
+
+
+// import type { InferGetServerSidePropsType, GetServerSideProps } from "next";
+// import dotenv from "dotenv";
+// import { Inter } from "next/font/google";
+// import { unsubscribe } from "diagnostics_channel";
+
+
+
+const Home = () => {
     const [user, setUser] = useState(null);
+    const router = useRouter();
 
-    useEffect(()=>{
-        const unsubscribe = onAuthStateChanged(auth, (user)=>{
+    useEffect(() =>{
+        const auth = getAuth(app);
+        const unsubscribe = auth.onAuthStateChanged((user) => {
             if(user){
-                setUser(user)
-            } else{
-                router.push("/start")
+                setUser(user);
+            }
+            else{
+                setUser(null);
             }
         });
 
         return () => unsubscribe();
 
-    }, [auth, router])
+    }, [])
 
-    const handleLogOut = async () => {
+    const signInWithGoogle = async() => {
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
         try{
-            await signOut(auth);
-            router.push("/start")
-        } catch (error){
-            console.log("error: ", error.message)
+            await signInWithPopup(auth, provider);
+            router.push("/logout"); 
+        } catch(error){
+        console.log("error signing in with google!") 
         }
-    };
-
-    
-    return(
-        <div>
-            <main className={`flex flex-col items-center min-h-screen p-8 `}>
-                <header className="w-full max-w-5xl text-center mb-12">
+    }
+    return (
+        <main className={`flex flex-col items-center min-h-screen p-8 `}>
+            {user ? (
+                <PostLoginReal/>
+            ):(
+                <div>
+                    <header className="w-full max-w-5xl text-center mb-12">
                     <h1 className="text-4xl font-bold text-blue-600 mb-4">Welcome to Mood to Meal</h1>
                     <p className="text-gray-700 text-lg">
-                        Thanks for signing in!
+                    Select your mood and preferences to discover tailored recipes. Sign in and get started.
                     </p>
-                </header>
+                    </header>
 
 
-                <button onClick={handleLogOut}>
-                    LOG OUT 
-                </button>
-          </main>
-        </div>
+                    <button onClick={signInWithGoogle}>
+                        Sign in with Google
+                    </button>
+
+                </div>
+            )
+            } 
+
+
+           
+        </main>
     )
-};
 
+}
 
+    
 
-
-export default PostLoginReal;
-
+export default Home;

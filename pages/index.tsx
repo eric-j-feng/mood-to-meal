@@ -11,6 +11,7 @@ import StateSelector from "@/components/StateSelector";
 import CookTimeSelector from "@/components/CookTimeSelector";
 import MoodSelector from "@/components/MoodSelector";
 import DietarySelector from "@/components/DietarySelector"; // Import DietarySelector
+import GeminiChat from "@/components/GeminiChat";
 
 dotenv.config({ path: ".env.local" });
 
@@ -204,11 +205,22 @@ export default function Home({
               ? dietaryRestrictions.join(", ")
               : "None"}
           </p>
-
-          <h2 className="text-2xl font-semibold mb-4">Pasta Recipes</h2>
-          <Recipes />
         </div>
       )}
+
+      <div className="w-full max-w-5xl">
+        <h2 className="text-2xl font-semibold mb-4">Pasta Recipes</h2>
+        <Recipes />
+      </div>
+
+      {/* Add GeminiChat at the bottom */}
+      <div className="w-full max-w-5xl mt-8">
+        <h2 className="text-2xl font-semibold mb-4">AI Meal Suggestions</h2>
+        <GeminiChat 
+          selectedMood={selectedMood}
+          weather={weather}
+        />
+      </div>
     </main>
   );
 }

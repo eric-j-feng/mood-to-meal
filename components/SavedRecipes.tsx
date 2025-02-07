@@ -1,9 +1,9 @@
-// components/Recipes.tsx
+// components/SavedRecipes.tsx
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { getAuth } from "firebase/auth";
-import { doc, updateDoc, arrayUnion } from "firebase/firestore";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc, updateDoc, arrayRemove } from "firebase/firestore";
 import { db } from "@/auth/firebase";
 
 type Recipe = {
@@ -16,55 +16,73 @@ type Recipe = {
   summary?: string;
 };
 
-const Recipes: React.FC = () => {
+const SavedRecipes: React.FC = () => {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [userId, setUserId] = useState<string | null>(null);
   const [expandedRecipe, setExpandedRecipe] = useState<number | null>(null);
 
   useEffect(() => {
-    const fetchRecipes = async () => {
-      try {
-        const response = await fetch("/api/recipes?query=pasta");
-        if (!response.ok) {
-          throw new Error("Failed to fetch recipes");
-        }
-        const data = await response.json();
-        // The API returns data with a 'results' property containing the recipes array
-        setRecipes(data.results || []); // Add fallback empty array
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUserId(user.uid);
+      } else {
+        setUserId(null);
+        setError("You need to be logged in to view saved recipes.");
         setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const fetchSavedRecipes = async () => {
+      if (userId) {
+        const userRef = doc(db, "users", userId);
+        try {
+          const userDoc = await getDoc(userRef);
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            setRecipes(userData.savedRecipes || []);
+          } else {
+            setRecipes([]);
+          }
+        } catch (err: any) {
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
       }
     };
 
-    fetchRecipes();
-  }, []);
+    fetchSavedRecipes();
+  }, [userId]);
 
-  const saveRecipe = async (recipe: Recipe) => {
-    const auth = getAuth();
-    const user = auth.currentUser;
-
-    if (user) {
-      const userRef = doc(db, "users", user.uid);
+  const removeRecipe = async (recipe: Recipe) => {
+    if (userId) {
+      const userRef = doc(db, "users", userId);
       try {
         await updateDoc(userRef, {
-          savedRecipes: arrayUnion(recipe),
+          savedRecipes: arrayRemove(recipe),
         });
-        alert("Recipe saved!");
+        setRecipes((prevRecipes) =>
+          prevRecipes.filter((r) => r.id !== recipe.id)
+        );
+        alert("Recipe removed!");
       } catch (error) {
-        console.error("Error saving recipe: ", error);
-        alert("Failed to save recipe.");
+        console.error("Error removing recipe: ", error);
+        alert("Failed to remove recipe.");
       }
-    } else {
-      alert("You need to be logged in to save recipes.");
     }
   };
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
-  if (!recipes || recipes.length === 0) return <div>No recipes found</div>;
+  if (!recipes || recipes.length === 0)
+    return <div>No saved recipes found</div>;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -122,12 +140,12 @@ const Recipes: React.FC = () => {
               </a>
             )}
 
-            {/* Save Recipe Button */}
+            {/* Remove Recipe Button */}
             <button
-              onClick={() => saveRecipe(recipe)}
-              className="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+              onClick={() => removeRecipe(recipe)}
+              className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
             >
-              Save Recipe
+              Remove
             </button>
           </div>
         </div>
@@ -136,4 +154,4 @@ const Recipes: React.FC = () => {
   );
 };
 
-export default Recipes;
+export default SavedRecipes;

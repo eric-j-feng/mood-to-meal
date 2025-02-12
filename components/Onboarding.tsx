@@ -1,36 +1,25 @@
 import { useState } from "react";
+import { auth, db } from "@/auth/firebase";
+import { doc, setDoc } from "firebase/firestore";
 import styles from "./Onboarding.module.css";
 
 interface OnboardingProps {
-  onComplete: (preferences: { dietaryRestrictions: string[]; allergies: string[]; cookingSkill: string }) => void;
+  onComplete: () => void;
 }
 
 const dietaryOptions = [
-  "Vegetarian",
-  "Vegan",
-  "Gluten-Free",
-  "Keto",
-  "Paleo",
-  "Halal",
-  "Kosher",
+  "Vegetarian", "Vegan", "Gluten-Free", "Keto", "Paleo", "Halal", "Kosher"
 ];
 
 const allergyOptions = [
-  "Peanuts",
-  "Tree Nuts",
-  "Dairy",
-  "Eggs",
-  "Soy",
-  "Wheat",
-  "Shellfish",
-  "Fish",
-  "Sesame"
+  "Peanuts", "Tree Nuts", "Dairy", "Eggs", "Soy", "Wheat", "Shellfish", "Fish", "Sesame"
 ];
 
 export default function Onboarding({ onComplete }: OnboardingProps) {
   const [dietaryRestrictions, setDietaryRestrictions] = useState<string[]>([]);
   const [allergies, setAllergies] = useState<string[]>([]);
   const [cookingSkill, setCookingSkill] = useState<string>("");
+  const [loading, setLoading] = useState(false);
 
   const handleCheckboxChange = (category: "dietaryRestrictions" | "allergies", option: string) => {
     if (category === "dietaryRestrictions") {
@@ -44,16 +33,32 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
     }
   };
 
-  const handleSubmit = () => {
-    const preferences = { dietaryRestrictions, allergies, cookingSkill };
+  const handleSubmit = async () => {
+    const user = auth.currentUser;
+    if (!user) {
+      console.error("User not authenticated");
+      return;
+    }
 
-    // Save preferences to localStorage
-    localStorage.setItem("userPreferences", JSON.stringify(preferences));
+    const userRef = doc(db, "users", user.uid);
+    setLoading(true);
 
-    console.log("User Preferences Saved:", preferences);
+    try {
+      await setDoc(userRef, {
+        preferences: {
+          dietaryRestrictions,
+          allergies,
+          cookingSkill,
+        }
+      }, { merge: true });
 
-    // Pass preferences back to parent component
-    onComplete(preferences);
+      console.log("Preferences saved to Firestore!");
+      onComplete();
+    } catch (error) {
+      console.error("Error saving preferences:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -114,8 +119,12 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
         </label>
 
         {/* Save Button */}
-        <button onClick={handleSubmit} className={styles.button}>
-          Save Preferences
+        <button
+          onClick={handleSubmit}
+          className={styles.button}
+          disabled={loading}
+        >
+          {loading ? "Saving..." : "Save Preferences"}
         </button>
       </div>
     </div>

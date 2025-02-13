@@ -5,11 +5,10 @@ import { app, db } from "@/auth/firebase";
 import { getAuth, signInWithPopup, GoogleAuthProvider } from "@firebase/auth";
 import { useRouter } from "next/router";
 import { doc, setDoc, getDoc } from "firebase/firestore";
-import PostLoginReal from "./logout";
 import Main from "./main";
 
 const Home = () => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<any>(null);
   const router = useRouter();
 
   useEffect(() => {

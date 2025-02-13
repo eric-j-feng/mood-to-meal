@@ -1,3 +1,15 @@
+// Add this new function to get user's current position
+export function getCurrentPosition(useCurrentLocation: boolean): Promise<GeolocationPosition> {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('Geolocation is not supported by your browser'));
+      useCurrentLocation = false;
+    } else {
+      navigator.geolocation.getCurrentPosition(resolve, reject);
+    }
+  });
+}
+
 export async function getCoordinates(selectedCity: string | null, selectedState: string | null) {
   try {
     // Validate inputs
@@ -40,14 +52,30 @@ export async function getCoordinates(selectedCity: string | null, selectedState:
   }
 }
 
-export async function getWeather(selectedCity: string | null, selectedState: string | null) {
+export async function getWeather(
+  selectedCity: string | null, 
+  selectedState: string | null,
+  useCurrentLocation: boolean = true 
+) {
   try {
-    const coords = await getCoordinates(selectedCity, selectedState);
-    if (!coords) {
-      return null;  // Return null if coordinates aren't available
+    let latFetched: number;
+    let lonFetched: number;
+
+    if (useCurrentLocation) {
+      // Get coordinates from browser's geolocation
+      const position = await getCurrentPosition(useCurrentLocation);
+      latFetched = position.coords.latitude;
+      lonFetched = position.coords.longitude;
+    } else {
+      // Use existing city/state lookup
+      const coords = await getCoordinates(selectedCity, selectedState);
+      if (!coords) {
+        return null;
+      }
+      latFetched = coords.latFetched;
+      lonFetched = coords.lonFetched;
     }
-    
-    const { latFetched, lonFetched } = coords;
+
     const apikey = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY;
     console.log("Using coordinates:", latFetched, lonFetched);
     

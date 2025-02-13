@@ -16,7 +16,7 @@ import Onboarding from "@/components/Onboarding";
 import { auth } from "@/auth/firebase"; // Import Firebase auth
 import { getAuth, signOut, onAuthStateChanged } from "@firebase/auth";
 import { useRouter } from "next/router";
-import app from "@/auth/firebase";
+import { app } from "@/auth/firebase";
 
 dotenv.config({ path: ".env.local" });
 
@@ -77,7 +77,7 @@ const Main = () => {
           try{
               await signOut(auth);
               router.push("/")
-          } catch (error){
+          } catch (error: any){
               console.log("error: ", error.message)
           }
       };
@@ -136,19 +136,32 @@ const Main = () => {
   useEffect(() => {
     const fetchWeather = async () => {
       try {
-        if (selectedCity && selectedState) {
-          const data = await getWeather(selectedCity, selectedState);
-          setWeather(data);
-        } else {
-          console.log("City and state not selected");
+        let weatherData;
+        
+        // First trying to get weather using geolocation
+        try {
+          weatherData = await getWeather(null, null, true);
+        } catch (geoError) {
+          console.log("Geolocation failed, falling back to city/state:", geoError);
+          // Fall back to city/state if geolocation fails
+          if (selectedCity && selectedState) {
+            weatherData = await getWeather(selectedCity, selectedState, false);
+          } else {
+            console.log("City and state not selected");
+            return;
+          }
+        }
+
+        if (weatherData) {
+          setWeather(weatherData);
         }
       } catch (error) {
         console.error("Error fetching weather:", error);
       }
     };
+    
     fetchWeather();
   }, [selectedCity, selectedState]);
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {

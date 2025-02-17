@@ -11,7 +11,6 @@ import Onboarding from "@/components/Onboarding";
 import { User } from "firebase/auth";
 
 const Home = () => {
-  const [user, setUser] = useState<any>(null);
   const [user, setUser] = useState<User | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [loading, setLoading] = useState(true);

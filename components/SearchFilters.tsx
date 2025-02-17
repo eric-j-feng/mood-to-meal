@@ -1,10 +1,10 @@
-import DietarySelector from "./DietarySelector";
+// import DietarySelector from "./DietarySelector";
 
 interface SearchFiltersProps {
   query: string;
   setQuery: (query: string) => void;
-  dietaryRestrictions: string[];
-  setDietaryRestrictions: (restrictions: string[]) => void;
+  // dietaryRestrictions: string[];
+  // setDietaryRestrictions: (restrictions: string[]) => void;
   maxCookTime: number | null;
   setMaxCookTime: (time: number | null) => void;
 }
@@ -12,8 +12,8 @@ interface SearchFiltersProps {
 const SearchFilters: React.FC<SearchFiltersProps> = ({
   query,
   setQuery,
-  dietaryRestrictions,
-  setDietaryRestrictions,
+  // dietaryRestrictions,
+  // setDietaryRestrictions,
   maxCookTime,
   setMaxCookTime,
 }) => {
@@ -33,7 +33,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
         />
       </div>
 
-      <div className="mb-4">
+      {/* <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700">
           Dietary Restrictions
         </label>
@@ -41,7 +41,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
           selectedRestrictions={dietaryRestrictions}
           onChange={setDietaryRestrictions}
         />
-      </div>
+      </div> */}
 
       <div>
         <label htmlFor="cookTime" className="block text-sm font-medium text-gray-700">

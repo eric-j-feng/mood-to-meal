@@ -10,13 +10,15 @@ import CitySelector from "@/components/CitySelector";
 import StateSelector from "@/components/StateSelector";
 import CookTimeSelector from "@/components/CookTimeSelector";
 import MoodSelector from "@/components/MoodSelector";
-import DietarySelector from "@/components/DietarySelector"; // Import DietarySelector
+// import DietarySelector from "@/components/DietarySelector"; // Import DietarySelector
 import GeminiChat from "@/components/GeminiChat";
 import Onboarding from "@/components/Onboarding";
 import { auth } from "@/auth/firebase"; // Import Firebase auth
 import { getAuth, signOut, onAuthStateChanged } from "@firebase/auth";
 import { useRouter } from "next/router";
-import { app } from "@/auth/firebase";
+import { db, app } from "@/auth/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { User } from "firebase/auth";
 
 dotenv.config({ path: ".env.local" });
 
@@ -58,16 +60,28 @@ const Main = () => {
 
    const auth = getAuth(app);
       const router = useRouter();
-      const [user, setUser] = useState(null);
+      const [user, setUser] = useState<User | null>(null);
   
       useEffect(()=>{
-          const unsubscribe = onAuthStateChanged(auth, (user)=>{
-              if(user){
-                  setUser(user)
-              } else{
-                  router.push("/")
-              }
-          });
+        const unsubscribe = onAuthStateChanged(auth, async (user)=>{
+          if(!user){
+            router.push("/")
+            return;
+          }
+
+          setUser(user);
+
+          const userRef = doc(db, "users", user.uid);
+          const userSnap = await getDoc(userRef);
+
+          if (!userSnap.exists() || !userSnap.data().preferences) {
+            setShowOnboarding(true);
+          } else {
+            setShowOnboarding(false);
+          }
+          setLoading(false);
+        });
+
   
           return () => unsubscribe();
   
@@ -77,8 +91,12 @@ const Main = () => {
           try{
               await signOut(auth);
               router.push("/")
-          } catch (error: any){
-              console.log("error: ", error.message)
+          } catch (error){
+            if (error instanceof Error) {
+              console.log("Error:", error.message);
+            } else {
+              console.log("An unknown error occurred", error);
+            }
           }
       };
 
@@ -93,8 +111,9 @@ const Main = () => {
   const [selectedCookTime, setSelectedCookTime] = useState<string | null>(null);
   const [showRecipes, setShowRecipes] = useState(false);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
-  const [dietaryRestrictions, setDietaryRestrictions] = useState<string[]>([]); // State for dietary restrictions
+  // const [dietaryRestrictions, setDietaryRestrictions] = useState<string[]>([]); // State for dietary restrictions
   const [userId, setUserId] = useState<string | null>(null); // State for user ID
+  const [loading, setLoading] = useState(true);
 
   const handleCitySelect = (city: string) => {
     setSelectedCity(city);
@@ -117,10 +136,10 @@ const Main = () => {
     // send to the backend here
   };
 
-  const handleDietaryChange = (restrictions: string[]) => {
-    setDietaryRestrictions(restrictions);
-    console.log("Dietary restrictions selected:", restrictions);
-  };
+  // const handleDietaryChange = (restrictions: string[]) => {
+  //   setDietaryRestrictions(restrictions);
+  //   console.log("Dietary restrictions selected:", restrictions);
+  // };
 
   const handleOnboardingComplete = (preferences: {
     dietaryRestrictions: string[];
@@ -178,18 +197,37 @@ const Main = () => {
     return () => unsubscribe();
   }, []);
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-100">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
+      </div>
+    );
+  }
+
   return (
     <main
       className={`flex flex-col items-center min-h-screen p-8 ${inter.className}`}
     >
       {showOnboarding ? (
-        <Onboarding onComplete={handleOnboardingComplete} />
+        <Onboarding onComplete={() => setShowOnboarding(false)} />
       ) : (
         <>
-          {/* Header */}
-          <button onClick={handleLogOut}>
-                    LOG OUT 
-          </button>
+          {/* Navigation Bar */}
+          <header className="w-full max-w-5xl flex justify-between items-center mb-8">
+            <div className="flex gap-4">
+              {/* Profile Button */}
+              <Link href="/profile">
+                <button className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
+                  Profile
+                </button>
+              </Link>
+              {/* Header */}
+              <button onClick={handleLogOut}>
+                LOG OUT 
+              </button>
+            </div>
+          </header>
 
           <header className="w-full max-w-5xl text-center mb-12">
             <h1 className="text-4xl font-bold text-blue-600 mb-4">
@@ -198,9 +236,6 @@ const Main = () => {
             <p className="text-gray-700 text-lg">
               Select your mood and preferences to discover tailored recipes.
             </p>
-            {userId && (
-              <p className="text-gray-700 text-lg">User ID: {userId}</p>
-            )}
           </header>
 
           {/* All input selection */}
@@ -263,7 +298,7 @@ const Main = () => {
               )}
 
               {/* Dietary Selection */}
-              <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
+              {/* <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
                 <h4 className="text-xl font-semibold text-gray-800 mb-4">
                   Dietary Restrictions:
                 </h4>
@@ -276,7 +311,7 @@ const Main = () => {
                     You selected: {dietaryRestrictions.join(", ")}
                   </p>
                 )}
-              </div>
+              </div> */}
 
               {/* Cook Time Selector */}
               <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
@@ -317,12 +352,12 @@ const Main = () => {
                 <strong>Cook Time:</strong> {selectedCookTime || "Not selected"}{" "}
                 minutes
               </p>
-              <p>
+              {/* <p>
                 <strong>Dietary Restrictions:</strong>{" "}
                 {dietaryRestrictions.length > 0
                   ? dietaryRestrictions.join(", ")
                   : "None"}
-              </p>
+              </p> */}
 
               <h2 className="text-2xl font-semibold mb-4">Pasta Recipes</h2>
               <Recipes />

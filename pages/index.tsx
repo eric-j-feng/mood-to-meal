@@ -91,14 +91,15 @@ const Home = () => {
           </>
         )
       ) : (
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center justify-center min-h-screen px-4">
           {/* Welcome Header */}
-          <header className="w-full max-w-5xl text-center mb-12">
-            <h1 className="text-4xl font-bold text-blue-600 mb-4">
+          <header className="w-full max-w-4xl text-center mb-12">
+            <h1 className="text-5xl font-extrabold text-blue-600 mb-4 animate-fade-in">
               Welcome to Mood to Meal
             </h1>
-            <p className="text-gray-700 text-lg">
+            <p className="text-gray-700 text-xl animate-slide-up">
               Select your mood and preferences to discover tailored recipes.
+              <br/>
               Sign in and get started.
             </p>
           </header>
@@ -106,10 +107,60 @@ const Home = () => {
           {/* Sign-In Button */}
           <button
             onClick={signInWithGoogle}
-            className="px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition"
+            className="px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-600 transition-transform transform hover:scale-105 animate-bounce-once"
+
           >
             Sign in with Google
           </button>
+
+
+          {/* Tailwind Animations */}
+  <style jsx>{`
+    @keyframes fade-in {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+    .animate-fade-in {
+      animation: fade-in 1.2s ease-out;
+    }
+
+    @keyframes slide-up {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+    .animate-slide-up {
+      animation: slide-up 1s ease-out;
+    }
+
+    @keyframes bounce-once {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.1);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+    .animate-bounce-once {
+      animation: bounce-once 0.5s ease-in-out;
+    }
+  `}</style>
+
+
+
+  
         </div>
       )}
     </main>

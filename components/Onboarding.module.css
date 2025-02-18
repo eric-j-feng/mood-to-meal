@@ -9,8 +9,11 @@
   }
   
   .header {
-    text-align: center;
-    margin-bottom: 1.5rem;
+    width: 100%; /* w-full */
+    max-width: 80rem; /* max-w-5xl (5xl = 64rem, but Tailwind's max-w-5xl is 80rem) */
+    text-align: center; /* text-center */
+    margin-bottom: 3rem; /* mb-12 (1rem = 16px, so 12 * 0.25rem = 3rem) */
+    padding-top: 5rem; /* pt-20 (20 * 0.25rem = 5rem) */
   }
   
   .title {

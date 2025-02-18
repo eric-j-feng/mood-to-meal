@@ -3,8 +3,8 @@
 interface SearchFiltersProps {
   query: string;
   setQuery: (query: string) => void;
-  dietaryRestrictions: string[];
-  setDietaryRestrictions: (restrictions: string[]) => void;
+  // dietaryRestrictions: string[];
+  // setDietaryRestrictions: (restrictions: string[]) => void;
   maxCookTime: number | null;
   setMaxCookTime: (time: number | null) => void;
   onSearch: () => void;
@@ -13,8 +13,8 @@ interface SearchFiltersProps {
 const SearchFilters: React.FC<SearchFiltersProps> = ({
   query,
   setQuery,
-  dietaryRestrictions,
-  setDietaryRestrictions,
+  // dietaryRestrictions,
+  // setDietaryRestrictions,
   maxCookTime,
   setMaxCookTime,
   onSearch
@@ -29,7 +29,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
           placeholder="Search recipes..."
           className="p-2 border rounded"
         />
-      </div>
+      </div> */}
 
       <div>
         <input

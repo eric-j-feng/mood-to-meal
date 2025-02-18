@@ -155,19 +155,32 @@ const Main = () => {
   useEffect(() => {
     const fetchWeather = async () => {
       try {
-        if (selectedCity && selectedState) {
-          const data = await getWeather(selectedCity, selectedState);
-          setWeather(data);
-        } else {
-          console.log("City and state not selected");
+        let weatherData;
+        
+        // First trying to get weather using geolocation
+        try {
+          weatherData = await getWeather(null, null, true);
+        } catch (geoError) {
+          console.log("Geolocation failed, falling back to city/state:", geoError);
+          // Fall back to city/state if geolocation fails
+          if (selectedCity && selectedState) {
+            weatherData = await getWeather(selectedCity, selectedState, false);
+          } else {
+            console.log("City and state not selected");
+            return;
+          }
+        }
+
+        if (weatherData) {
+          setWeather(weatherData);
         }
       } catch (error) {
         console.error("Error fetching weather:", error);
       }
     };
+    
     fetchWeather();
   }, [selectedCity, selectedState]);
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {

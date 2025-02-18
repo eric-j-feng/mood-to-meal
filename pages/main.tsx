@@ -346,17 +346,12 @@ const Main = () => {
                   : "None"}
               </p> */}
 
-              <h2 className="text-2xl font-semibold mb-4">Pasta Recipes</h2>
+              <h2 className="text-2xl font-semibold mb-4">Suggested Recipes</h2>
               <Recipes />
             </div>
           )}
         </>
       )}
-
-      <div className="w-full max-w-5xl">
-        <h2 className="text-2xl font-semibold mb-4">Pasta Recipes</h2>
-        <Recipes />
-      </div>
 
       {/* Add GeminiChat at the bottom */}
       <div className="w-full max-w-5xl mt-8">

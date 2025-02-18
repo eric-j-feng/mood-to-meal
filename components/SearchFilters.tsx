@@ -1,4 +1,4 @@
-import DietarySelector from "./DietarySelector";
+//import DietarySelector from "./DietarySelector";
 
 interface SearchFiltersProps {
   query: string;
@@ -7,6 +7,7 @@ interface SearchFiltersProps {
   setDietaryRestrictions: (restrictions: string[]) => void;
   maxCookTime: number | null;
   setMaxCookTime: (time: number | null) => void;
+  onSearch: () => void;
 }
 
 const SearchFilters: React.FC<SearchFiltersProps> = ({
@@ -16,46 +17,34 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
   setDietaryRestrictions,
   maxCookTime,
   setMaxCookTime,
+  onSearch
 }) => {
   return (
-    <div className="mb-8 p-4 bg-white rounded-lg shadow">
-      <div className="mb-4">
-        <label htmlFor="search" className="block text-sm font-medium text-gray-700">
-          Search Recipes
-        </label>
+    <div className="mb-6 space-y-4">
+      <div>
         <input
           type="text"
-          id="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          placeholder="Enter keywords (e.g., pasta, chicken)"
+          placeholder="Search recipes..."
+          className="p-2 border rounded"
         />
       </div>
-
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700">
-          Dietary Restrictions
-        </label>
-        <DietarySelector
-          selectedRestrictions={dietaryRestrictions}
-          onChange={setDietaryRestrictions}
-        />
-      </div>
-
       <div>
-        <label htmlFor="cookTime" className="block text-sm font-medium text-gray-700">
-          Maximum Cooking Time (minutes)
-        </label>
         <input
           type="number"
-          id="cookTime"
           value={maxCookTime || ''}
           onChange={(e) => setMaxCookTime(e.target.value ? Number(e.target.value) : null)}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          min="0"
+          placeholder="Maximum cooking time (minutes)"
+          className="p-2 border rounded"
         />
       </div>
+      <button
+        onClick={onSearch}
+        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+      >
+        Update Search
+      </button>
     </div>
   );
 };

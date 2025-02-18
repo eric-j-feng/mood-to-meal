@@ -6,23 +6,19 @@ import { User } from "firebase/auth";
 import { useRouter } from "next/router";
 
 const dietaryOptions = [
-  "Vegetarian", "Vegan", "Gluten-Free", "Keto", "Paleo", "Halal", "Kosher"
-];
-
-const allergyOptions = [
-  "Peanuts", "Tree Nuts", "Dairy", "Eggs", "Soy", "Wheat", "Shellfish", "Fish", "Sesame"
+  "Vegan", "Vegetarian", "Pescetarian", "Gluten-Free", "Grain-Free", 
+  "Dairy-Free", "High-Protein", "Whole30", "Low-Sodium", "Low-Carb", 
+  "Paleo", "Ketogenic", "FODMAP", "Primal"
 ];
 
 interface Preferences {
   dietaryRestrictions: string[];
-  allergies: string[];
   cookingSkill: string;
 }
 
 export default function Profile() {
   const [preferences, setPreferences] = useState<Preferences>({
     dietaryRestrictions: [],
-    allergies: [],
     cookingSkill: "",
   });
 
@@ -49,7 +45,6 @@ export default function Profile() {
         const userData = userSnap.data();
         setPreferences({
           dietaryRestrictions: userData.preferences?.dietaryRestrictions || [],
-          allergies: userData.preferences?.allergies || [],
           cookingSkill: userData.preferences?.cookingSkill || "",
         });
       }
@@ -59,7 +54,7 @@ export default function Profile() {
     return () => unsubscribe();
   }, []);
 
-  const handleCheckboxChange = (category: "dietaryRestrictions" | "allergies", option: string) => {
+  const handleCheckboxChange = (category: "dietaryRestrictions", option: string) => {
     setPreferences((prev) => {
       const updatedCategory = prev[category].includes(option)
         ? prev[category].filter((item) => item !== option)
@@ -120,22 +115,6 @@ export default function Profile() {
               ))}
             </fieldset>
 
-            {/* Allergy Selections */}
-            <fieldset className="mt-4">
-              <legend className="font-semibold">Common Allergies</legend>
-              {allergyOptions.map((option) => (
-                <label key={option} className="block mt-2">
-                  <input
-                    type="checkbox"
-                    checked={preferences.allergies.includes(option)}
-                    onChange={() => handleCheckboxChange("allergies", option)}
-                    className="mr-2"
-                  />
-                  {option}
-                </label>
-              ))}
-            </fieldset>
-
             {/* Cooking Skill Level */}
             <label className="block mt-4">
               <span className="font-semibold">Cooking Skill Level:</span>
@@ -155,7 +134,6 @@ export default function Profile() {
           <>
             {/* View Mode - Show Saved Preferences */}
             <p className="mt-4"><strong>Dietary Restrictions:</strong> {preferences.dietaryRestrictions.join(", ") || "None"}</p>
-            <p className="mt-2"><strong>Allergies:</strong> {preferences.allergies.join(", ") || "None"}</p>
             <p className="mt-2"><strong>Cooking Skill Level:</strong> {preferences.cookingSkill || "Not specified"}</p>
           </>
         )}

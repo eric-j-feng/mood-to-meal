@@ -21,6 +21,12 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   const [cookingSkill, setCookingSkill] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
+
+
+  // new 
+  const [step, setStep] = useState(1); 
+  
+  // end new 
   const handleCheckboxChange = (category: "dietaryRestrictions" | "allergies", option: string) => {
     if (category === "dietaryRestrictions") {
       setDietaryRestrictions((prev) =>
@@ -62,18 +68,27 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   };
 
   return (
-    <div className={styles.pageContainer}>
-      {/* Mood to Meal Header (Outside White Box) */}
+    <div className="flex flex-col items-center justify-center p-20 bg-gray-100">
+     {/* Mood to Meal Header (Outside White Box) */}
       <header className={styles.header}>
-        <h1 className={styles.title}>Mood to Meal</h1>
-        <p className={styles.subtitle}>Let's personalize your experience</p>
+            <h1 className="text-4xl font-bold text-blue-600 mb-4">
+              Mood to Meal
+            </h1>
+            <p className="text-gray-700 text-lg">
+              Let's Get You Onboarded! 
+            </p>
       </header>
 
-      {/* Onboarding Form (White Box) */}
-      <div className={styles.container}>
-        {/* Dietary Restrictions */}
-        <fieldset className={styles.section}>
-          <legend className={styles.legend}>Dietary Restrictions</legend>
+
+      {/* The Onboarding Box with Diff Sequences */}
+      <div className="bg-white shadow-lg rounded-lg p-8 w-96 text-center">
+
+      
+        {step == 1 && (
+          <>
+          <h2 className="text-xl font-semibold mb-4"> Dietary Restrictions</h2>
+          <fieldset className={styles.section}>
+          {/* <legend className={styles.legend}>Dietary Restrictions</legend> */}
           {dietaryOptions.map((option) => (
             <label key={option} className={styles.checkboxLabel}>
               <input
@@ -86,26 +101,53 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
             </label>
           ))}
         </fieldset>
+        <button onClick={() => setStep(2)}
+                className="mt-4 bg-blue-600 text-white py-2 px-4 rounded-lg w-full">
+          Next
+        </button>
+          </>
+        )}
 
-        {/* Allergy Selections */}
-        <fieldset className={styles.section}>
-          <legend className={styles.legend}>Common Allergies</legend>
-          {allergyOptions.map((option) => (
-            <label key={option} className={styles.checkboxLabel}>
-              <input
-                type="checkbox"
-                checked={allergies.includes(option)}
-                onChange={() => handleCheckboxChange("allergies", option)}
-                className={styles.checkbox}
-              />
-              {option}
-            </label>
-          ))}
-        </fieldset>
 
-        {/* Cooking Skill Level */}
-        <label className={styles.label}>
-          Cooking Skill Level:
+        {step == 2 && (
+        <>
+            <h2 className="text-xl font-semibold mb-4">Allergies</h2>
+            <fieldset className={styles.section}>
+            {allergyOptions.map((option) => (
+              <label key={option} className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={allergies.includes(option)}
+                  onChange={() => handleCheckboxChange("allergies", option)}
+                  className={styles.checkbox}
+                />
+                {option}
+              </label>
+            ))}
+          </fieldset>
+
+          <div className="mt-4 flex justify-between">
+            <button
+              onClick={() => setStep(1)}
+              className="bg-gray-400 text-white py-2 px-4 rounded-lg"
+            >
+                Back
+            </button>
+            <button
+              onClick={() => setStep(3)}
+              className="bg-blue-600 text-white py-2 px-4 rounded-lg"
+            >
+              Next
+            </button>
+          </div>
+        </>
+        )}
+
+
+        {step == 3 && (
+          <>
+          <h2 className="text-xl font-semibold mb-4">Cooking Skill Level</h2>
+          <label className={styles.label}>
           <select
             value={cookingSkill}
             onChange={(e) => setCookingSkill(e.target.value)}
@@ -117,15 +159,24 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
             <option value="Expert">Expert</option>
           </select>
         </label>
+            <div className="mt-4 flex justify-between">
+              <button
+                onClick={() => setStep(2)}
+                className="bg-gray-400 text-white py-2 px-4 rounded-lg"
+              >
+                Back
+              </button>
+              <button
+                onClick={handleSubmit}
+                className="bg-green-600 text-white py-2 px-4 rounded-lg"
+                disabled={loading}
+              >
+                Submit
+              </button>
+            </div>
+          </>
+        )}
 
-        {/* Save Button */}
-        <button
-          onClick={handleSubmit}
-          className={styles.button}
-          disabled={loading}
-        >
-          {loading ? "Saving..." : "Save Preferences"}
-        </button>
       </div>
     </div>
   );

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { auth, db } from "@/auth/firebase";
+import { useRouter } from "next/router";
 import { doc, setDoc } from "firebase/firestore";
+
 import styles from "./Onboarding.module.css";
 
 interface OnboardingProps {
@@ -8,32 +10,25 @@ interface OnboardingProps {
 }
 
 const dietaryOptions = [
-  "Vegetarian", "Vegan", "Gluten-Free", "Keto", "Paleo", "Halal", "Kosher"
-];
-
-const allergyOptions = [
-  "Peanuts", "Tree Nuts", "Dairy", "Eggs", "Soy", "Wheat", "Shellfish", "Fish", "Sesame"
+  "Vegan", "Vegetarian", "Pescetarian", "Gluten-Free", "Grain-Free", 
+  "Dairy-Free", "High-Protein", "Whole30", "Low-Sodium", "Low-Carb", 
+  "Paleo", "Ketogenic", "FODMAP", "Primal"
 ];
 
 export default function Onboarding({ onComplete }: OnboardingProps) {
   const [dietaryRestrictions, setDietaryRestrictions] = useState<string[]>([]);
-  const [allergies, setAllergies] = useState<string[]>([]);
   const [cookingSkill, setCookingSkill] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
-
+  const router = useRouter();
 
   // new 
   const [step, setStep] = useState(1); 
   
   // end new 
-  const handleCheckboxChange = (category: "dietaryRestrictions" | "allergies", option: string) => {
+  const handleCheckboxChange = (category: "dietaryRestrictions", option: string) => {
     if (category === "dietaryRestrictions") {
       setDietaryRestrictions((prev) =>
-        prev.includes(option) ? prev.filter((item) => item !== option) : [...prev, option]
-      );
-    } else {
-      setAllergies((prev) =>
         prev.includes(option) ? prev.filter((item) => item !== option) : [...prev, option]
       );
     }
@@ -53,13 +48,13 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
       await setDoc(userRef, {
         preferences: {
           dietaryRestrictions,
-          allergies,
           cookingSkill,
         }
       }, { merge: true });
 
       console.log("Preferences saved to Firestore!");
       onComplete();
+      router.push("/main");
     } catch (error) {
       console.error("Error saving preferences:", error);
     } finally {
@@ -108,43 +103,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
           </>
         )}
 
-
         {step == 2 && (
-        <>
-            <h2 className="text-xl font-semibold mb-4">Allergies</h2>
-            <fieldset className={styles.section}>
-            {allergyOptions.map((option) => (
-              <label key={option} className={styles.checkboxLabel}>
-                <input
-                  type="checkbox"
-                  checked={allergies.includes(option)}
-                  onChange={() => handleCheckboxChange("allergies", option)}
-                  className={styles.checkbox}
-                />
-                {option}
-              </label>
-            ))}
-          </fieldset>
-
-          <div className="mt-4 flex justify-between">
-            <button
-              onClick={() => setStep(1)}
-              className="bg-gray-400 text-white py-2 px-4 rounded-lg"
-            >
-                Back
-            </button>
-            <button
-              onClick={() => setStep(3)}
-              className="bg-blue-600 text-white py-2 px-4 rounded-lg"
-            >
-              Next
-            </button>
-          </div>
-        </>
-        )}
-
-
-        {step == 3 && (
           <>
           <h2 className="text-xl font-semibold mb-4">Cooking Skill Level</h2>
           <label className={styles.label}>

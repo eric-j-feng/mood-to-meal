@@ -213,31 +213,29 @@ const Main = () => {
         <Onboarding onComplete={() => setShowOnboarding(false)} />
       ) : (
         <>
-          {/* Navigation Bar */}
-          <header className="w-full max-w-5xl flex justify-between items-center mb-8">
-            <div className="flex gap-4">
-              {/* Profile Button */}
-              <Link href="/profile">
-                <button className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
-                  Profile
-                </button>
-              </Link>
-              {/* Header */}
-              <button onClick={handleLogOut}>
-                LOG OUT 
-              </button>
-            </div>
-          </header>
 
-          <header className="w-full max-w-5xl text-center mb-12">
+        {/* Title  */}
+          <header className="w-full max-w-5xl text-center mb-12 pt-20">
             <h1 className="text-4xl font-bold text-blue-600 mb-4">
               Mood to Meal
             </h1>
             <p className="text-gray-700 text-lg">
               Select your mood and preferences to discover tailored recipes.
             </p>
+            <div className="flex gap-4 justify-center mt-4">
+              <Link href="/profile">
+                  <button  className="px-4 py-2 bg-white text-blue-600 rounded-md font-semibold shadow hover:bg-gray-200 transition">
+                    Profile
+                  </button>
+              </Link>
+              <button onClick={handleLogOut} className="px-4 py-2 bg-red-500 text-white rounded-md font-semibold shadow hover:bg-red-600 transition">
+                LOG OUT
+              </button>
+            </div>
           </header>
 
+  
+        
           {/* All input selection */}
           {!showRecipes ? (
             <div className="w-full max-w-5xl bg-white shadow-lg rounded-2xl p-6 mb-8">
@@ -359,17 +357,12 @@ const Main = () => {
                   : "None"}
               </p> */}
 
-              <h2 className="text-2xl font-semibold mb-4">Pasta Recipes</h2>
+            
               <Recipes />
             </div>
           )}
         </>
       )}
-
-      <div className="w-full max-w-5xl">
-        <h2 className="text-2xl font-semibold mb-4">Pasta Recipes</h2>
-        <Recipes />
-      </div>
 
       {/* Add GeminiChat at the bottom */}
       <div className="w-full max-w-5xl mt-8">

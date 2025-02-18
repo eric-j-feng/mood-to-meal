@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import Recipes from './recipes';
 
 type WeatherData = {
   temperature: number;
@@ -40,7 +41,7 @@ If the weather is cold/rainy, suggest warm, hearty, or soothing meals.
 If the weather is hot/sunny, suggest light, refreshing, or hydrating dishes.
 Combine mood and weather for a well-balanced suggestion.
 
-Please suggest a suitable meal.
+Please suggest a suitable meal. Only output the recipe name, keep it to one or two words about food only.
 `;
       
       const genAI = new GoogleGenerativeAI(apiKey);
@@ -70,8 +71,13 @@ Please suggest a suitable meal.
       {error && <p className="text-red-500 mt-2">{error}</p>}
       
       {response && (
-        <div className="mt-4 p-4 bg-gray-100 rounded">
-          <p>{response}</p>
+        <div className="mt-4">
+          <div className="p-4 bg-gray-100 rounded">
+            <p>Suggested meal: {response}</p>
+          </div>
+          <div className="mt-4">
+            <Recipes geminiSuggestion={response} />
+          </div>
         </div>
       )}
     </div>

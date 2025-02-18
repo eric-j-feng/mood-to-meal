@@ -3,7 +3,12 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
-  const query = req.query.query || 'pasta';
+  const query = req.query.query;
+
+  // Return early if no query provided
+  if (!query) {
+    return res.status(400).json({ error: "Query parameter is required" });
+  }
 
   const API_KEY = process.env.SPOONACULAR_API_KEY;
 

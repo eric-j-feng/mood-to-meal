@@ -344,7 +344,7 @@ const Main = () => {
                   : "None"}
               </p> */}
 
-              <h2 className="text-2xl font-semibold mb-4">Suggested Recipes</h2>
+            
               <Recipes />
             </div>
           )}

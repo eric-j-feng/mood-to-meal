@@ -42,6 +42,7 @@ If the weather is hot/sunny, suggest light, refreshing, or hydrating dishes.
 Combine mood and weather for a well-balanced suggestion.
 
 Please suggest a suitable meal. Only output the recipe name, keep it to one or two words about food only.
+Do not use the word "sunshine".
 `;
       
       const genAI = new GoogleGenerativeAI(apiKey);

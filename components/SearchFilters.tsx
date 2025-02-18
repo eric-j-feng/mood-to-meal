@@ -1,4 +1,4 @@
-import DietarySelector from "./DietarySelector";
+// import DietarySelector from "./DietarySelector";
 
 interface SearchFiltersProps {
   query: string;
@@ -33,7 +33,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
         />
       </div>
 
-      <div className="mb-4">
+      {/* <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700">
           Dietary Restrictions
         </label>
@@ -41,7 +41,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
           selectedRestrictions={dietaryRestrictions}
           onChange={setDietaryRestrictions}
         />
-      </div>
+      </div> */}
 
       <div>
         <label htmlFor="cookTime" className="block text-sm font-medium text-gray-700">

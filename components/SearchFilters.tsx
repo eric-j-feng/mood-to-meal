@@ -1,4 +1,4 @@
-//import DietarySelector from "./DietarySelector";
+// import DietarySelector from "./DietarySelector";
 
 interface SearchFiltersProps {
   query: string;
@@ -30,6 +30,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
           className="p-2 border rounded"
         />
       </div>
+
       <div>
         <input
           type="number"

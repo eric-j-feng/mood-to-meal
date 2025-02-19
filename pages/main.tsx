@@ -17,7 +17,7 @@ import { auth } from "@/auth/firebase"; // Import Firebase auth
 import { getAuth, signOut, onAuthStateChanged } from "@firebase/auth";
 import { useRouter } from "next/router";
 import { db, app } from "@/auth/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { User } from "firebase/auth";
 
 dotenv.config({ path: ".env.local" });
@@ -148,10 +148,6 @@ const Main = () => {
     setShowOnboarding(false);
   };
 
-  const handleSubmit = () => {
-    setShowRecipes(true);
-  };
-
   useEffect(() => {
     const fetchWeather = async () => {
       try {
@@ -197,6 +193,32 @@ const Main = () => {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    // Save preferences whenever they change
+    const savePreferences = async () => {
+      if (!user || !selectedCity || !selectedState || !selectedMood || !selectedCookTime) {
+        return;
+      }
+
+      try {
+        const userRef = doc(db, "users", user.uid);
+        await updateDoc(userRef, {
+          preferences: {
+            city: selectedCity,
+            state: selectedState,
+            cookTime: selectedCookTime,
+            mood: selectedMood
+          }
+        });
+        setShowRecipes(true);
+      } catch (error) {
+        console.error("Error saving preferences:", error);
+      }
+    };
+
+    savePreferences();
+  }, [user, selectedCity, selectedState, selectedMood, selectedCookTime]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-100">
@@ -210,7 +232,7 @@ const Main = () => {
       className={`flex flex-col items-center min-h-screen p-8 ${inter.className}`}
     >
       {showOnboarding ? (
-        <Onboarding onComplete={() => setShowOnboarding(false)} />
+        <Onboarding onComplete={handleOnboardingComplete} />
       ) : (
         <>
 
@@ -325,14 +347,6 @@ const Main = () => {
                   <p>Your Cook Time: {selectedCookTime} minutes</p>
                 )}
               </div>
-
-              {/* Submit Button */}
-              <button
-                onClick={handleSubmit}
-                className="mt-4 px-6 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition"
-              >
-                Submit
-              </button>
             </div>
           ) : (
             // Recipes Section
@@ -358,7 +372,12 @@ const Main = () => {
               </p> */}
 
             
-              <Recipes />
+              <Recipes 
+                selectedCity={selectedCity}
+                selectedState={selectedState}
+                selectedMood={selectedMood}
+                selectedCookTime={selectedCookTime}
+              />
             </div>
           )}
         </>

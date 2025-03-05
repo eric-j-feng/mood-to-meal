@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Inter } from "next/font/google";
+import { Poppins} from "next/font/google";
 import client from "@/lib/mongodb";
 import Recipes from "@/components/recipes";
 import type { InferGetServerSidePropsType, GetServerSideProps } from "next";
@@ -26,7 +26,10 @@ dotenv.config({ path: ".env.local" });
 //   isConnected: boolean;
 // };
 
-const inter = Inter({ subsets: ["latin"] });
+const myFont = Poppins({
+  weight:['400'],
+  subsets: ['latin']
+})
 
 // export const getServerSideProps: GetServerSideProps<
 //   ConnectionStatus
@@ -229,7 +232,7 @@ const Main = () => {
 
   return (
     <main
-      className={`flex flex-col items-center min-h-screen p-8 ${inter.className}`}
+      className={`bg-[url('/assets/texture.jpg')] flex flex-col items-center min-h-screen p-8 ${myFont.className}`}
     >
       {showOnboarding ? (
         <Onboarding onComplete={handleOnboardingComplete} />
@@ -238,7 +241,7 @@ const Main = () => {
 
         {/* Title  */}
           <header className="w-full max-w-5xl text-center mb-12 pt-20">
-            <h1 className="text-4xl font-bold text-blue-600 mb-4">
+            <h1 className="text-4xl font-bold text-green-2000 mb-4">
               Mood to Meal
             </h1>
             <p className="text-gray-700 text-lg">
@@ -251,10 +254,16 @@ const Main = () => {
                   </button>
               </Link>
               <button onClick={handleLogOut} className="px-4 py-2 bg-red-500 text-white rounded-md font-semibold shadow hover:bg-red-600 transition">
-                LOG OUT
+                Log Out
               </button>
             </div>
           </header>
+
+          <img src="/assets/sticker1.png" className="absolute bottom-35 left-24 right-20 w-40 rotate-6 drop-shadow-lg" />
+          <img src="/assets/sticker2.png" className="absolute top-40 right-20 w-44 -rotate-12 drop-shadow-lg" />
+          <img src="/assets/sticker3.png" className="absolute bottom-20 left-12 w-36 rotate-3 drop-shadow-lg" />
+          <img src="/assets/sticker4.png" className="absolute top-30 bottom-20 right-10 h-20 -rotate-6 drop-shadow-lg" />
+          <img src="/assets/sticker5.png" className="absolute bottom-25 right-12 h-24 -rotate-6 drop-shadow-lg" />
 
   
         

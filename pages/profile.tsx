@@ -200,9 +200,7 @@ export default function Profile() {
   }
 
   return (
-    <div className= {`max-w-4xl mx-auto p-6  ${myFont.className}`}>
-      {/* Back to Main Button */}
-    <div className="max-w-4xl mx-auto p-6">
+    <div className={`max-w-4xl mx-auto p-6 ${myFont.className}`}>
       <button
         onClick={() => router.push("/main")}
         className="mb-4 px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition"

@@ -10,6 +10,12 @@ import {
 import SavedRecipes from "@/components/SavedRecipes";
 import { User } from "firebase/auth";
 import { useRouter } from "next/router";
+import { Poppins} from "next/font/google";
+const myFont = Poppins({
+  weight:['400'],
+  subsets: ['latin']
+})
+
 
 const dietaryOptions = [
   "Vegan",
@@ -194,6 +200,8 @@ export default function Profile() {
   }
 
   return (
+    <div className= {`max-w-4xl mx-auto p-6  ${myFont.className}`}>
+      {/* Back to Main Button */}
     <div className="max-w-4xl mx-auto p-6">
       <button
         onClick={() => router.push("/main")}

@@ -1,19 +1,15 @@
 // components/SavedRecipes.tsx
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, updateDoc, arrayRemove } from "firebase/firestore";
 import { db } from "@/auth/firebase";
+import MarkdownDisplay from "./MarkdownDisplay";
 
 type Recipe = {
-  id: number;
+  id: string;
   title: string;
-  image: string;
-  readyInMinutes?: number;
-  servings?: number;
-  sourceUrl?: string;
-  summary?: string;
+  content: string;
 };
 
 const SavedRecipes: React.FC = () => {
@@ -21,7 +17,7 @@ const SavedRecipes: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
-  const [expandedRecipe, setExpandedRecipe] = useState<number | null>(null);
+  const [expandedRecipe, setExpandedRecipe] = useState<string | null>(null);
 
   useEffect(() => {
     const auth = getAuth();
@@ -85,30 +81,16 @@ const SavedRecipes: React.FC = () => {
     return <div>No saved recipes found</div>;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 gap-6">
       {recipes.map((recipe) => (
         <div
           key={recipe.id}
           className="border rounded-lg overflow-hidden shadow-lg bg-white"
         >
-          <div className="relative h-48 w-full">
-            <Image
-              src={recipe.image}
-              alt={recipe.title}
-              fill
-              className="object-cover"
-            />
-          </div>
           <div className="p-4">
             <h3 className="font-bold text-xl mb-2">{recipe.title}</h3>
-            <div className="flex justify-between text-sm text-gray-600 mb-4">
-              {recipe.readyInMinutes && (
-                <span>⏱️ {recipe.readyInMinutes} mins</span>
-              )}
-              {recipe.servings && <span>👥 Serves {recipe.servings}</span>}
-            </div>
 
-            {/* Toggle Summary Button */}
+            {/* Toggle Content Button */}
             <button
               onClick={() =>
                 setExpandedRecipe(
@@ -120,24 +102,11 @@ const SavedRecipes: React.FC = () => {
               {expandedRecipe === recipe.id ? "Hide Details" : "Show Details"}
             </button>
 
-            {/* Recipe Summary */}
-            {expandedRecipe === recipe.id && recipe.summary && (
-              <div
-                className="mt-2 mb-4 text-sm text-gray-700"
-                dangerouslySetInnerHTML={{ __html: recipe.summary }}
-              />
-            )}
-
-            {/* Full Recipe Link */}
-            {recipe.sourceUrl && (
-              <a
-                href={recipe.sourceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-              >
-                View Full Recipe
-              </a>
+            {/* Recipe Content */}
+            {expandedRecipe === recipe.id && (
+              <div className="mt-4 mb-4">
+                <MarkdownDisplay content={recipe.content} />
+              </div>
             )}
 
             {/* Remove Recipe Button */}

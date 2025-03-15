@@ -126,6 +126,30 @@ Generate a recipe. Do not speak in a conversational tone.`;
     }
   };
 
+  const modifyRecipe = async (modificationRequest: string) => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+      if (!apiKey) {
+        throw new Error('API key not found');
+      }
+
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+      const modResult = await model.generateContent(`Modify the following recipe:\n\n${response}\n\nModification request: ${modificationRequest}`);
+      const modifiedText = modResult.response.text();
+      setResponse(modifiedText);
+    } catch (err) {
+      setError('Error modifying recipe: ' + (err as Error).message);
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="p-4">
       <div className="mb-4">
@@ -155,7 +179,10 @@ Generate a recipe. Do not speak in a conversational tone.`;
       
       {response && (
         <div className="mt-4">
-          <Recipes geminiSuggestion={response} />
+          <Recipes 
+            geminiSuggestion={response}
+            modifyRecipe={modifyRecipe}
+          />
         </div>
       )}
     </div>

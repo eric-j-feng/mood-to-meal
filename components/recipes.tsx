@@ -14,10 +14,13 @@ type Recipe = {
 
 interface RecipesProps {
   geminiSuggestion?: string;
+  modifyRecipe?: (modificationRequest: string) => void;
 }
 
-const Recipes: React.FC<RecipesProps> = ({ geminiSuggestion }) => {
+const Recipes: React.FC<RecipesProps> = ({ geminiSuggestion, modifyRecipe }) => {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
+  const [modificationText, setModificationText] = useState<string>('');
+  const [isEditing, setIsEditing] = useState<boolean>(false);
 
   useEffect(() => {
     if (geminiSuggestion) {
@@ -27,9 +30,9 @@ const Recipes: React.FC<RecipesProps> = ({ geminiSuggestion }) => {
       let contentLines = [...lines];
 
       // Look for a title in the first few lines
-      for (let i = 0; i < Math.min(3, lines.length); i++) {
-        const line = lines[i];
-        if (line.toLowerCase().includes('recipe') || line.match(/^#+ /)) {
+      for (let i = 0; i < Math.min(3, contentLines.length); i++) {
+        const line = contentLines[i];
+        if (!line.toLowerCase().includes("okay") && (line.toLowerCase().includes("recipe") || line.match(/^#+ /))) {
           title = line.replace(/^#+ /, '').replace(' Recipe', '').trim();
           contentLines.splice(i, 1); // Remove the title line from content
           break;
@@ -50,10 +53,18 @@ const Recipes: React.FC<RecipesProps> = ({ geminiSuggestion }) => {
       setRecipe({
         id: Date.now().toString(),
         title,
-        content: contentLines.join('\n').trim() // Join remaining lines for content
+        content: contentLines.join('\n').trim(), // Join remaining lines for content
       });
     }
   }, [geminiSuggestion]);
+
+  const handleModify = () => {
+    if (modifyRecipe && modificationText) {
+      modifyRecipe(modificationText);
+      setModificationText('');
+      setIsEditing(false);
+    }
+  };
 
   const saveRecipe = async () => {
     const auth = getAuth();
@@ -88,12 +99,37 @@ const Recipes: React.FC<RecipesProps> = ({ geminiSuggestion }) => {
         <div className="mb-4">
           <MarkdownDisplay content={recipe.content} />
         </div>
-        <button
-          onClick={saveRecipe}
-          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
-        >
-          Save Recipe
-        </button>
+        <div className="flex gap-4">
+          <button
+            onClick={saveRecipe}
+            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+          >
+            Save Recipe
+          </button>
+          <button
+            onClick={() => setIsEditing(!isEditing)}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          >
+            {isEditing ? "Cancel" : "Edit Recipe"}
+          </button>
+        </div>
+        {isEditing && (
+          <div className="mt-4">
+            <input
+              type="text"
+              value={modificationText}
+              onChange={(e) => setModificationText(e.target.value)}
+              placeholder="Enter modification request..."
+              className="w-full p-2 border rounded"
+            />
+            <button
+              onClick={handleModify}
+              className="mt-2 px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors"
+            >
+              Submit Modifications
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

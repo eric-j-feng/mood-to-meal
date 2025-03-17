@@ -9,6 +9,13 @@ import { doc, setDoc, getDoc } from "firebase/firestore";
 import Main from "./main";
 import Onboarding from "@/components/Onboarding";
 import { User } from "firebase/auth";
+import { Poppins} from "next/font/google";
+
+const myFont = Poppins({
+  weight:['400'],
+  subsets: ['latin']
+})
+
 
 const Home = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -74,13 +81,13 @@ const Home = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-100">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 "></div>
       </div>
     );
   }
 
   return (
-    <main className="flex flex-col items-center min-h-screen p-8">
+    <main className={`relative flex bg-[url('/assets/texture.jpg')] flex-col items-center min-h-screen p-8 ${myFont.className}`}>
       {user ? (
         showOnboarding ? (
           <Onboarding onComplete={() => setShowOnboarding(false)} />
@@ -94,24 +101,31 @@ const Home = () => {
         <div className="flex flex-col items-center justify-center min-h-screen px-4">
           {/* Welcome Header */}
           <header className="w-full max-w-4xl text-center mb-12">
-            <h1 className="text-5xl font-extrabold text-blue-600 mb-4 animate-fade-in">
-              Welcome to Mood to Meal
+            <h1 className="text-5xl font-extrabold text-green-2000 mb-4 animate-fade-in">
+              welcome to mood to meal
             </h1>
-            <p className="text-gray-700 text-xl animate-slide-up">
+            <p className="text-gray-900 text-2xl animate-slide-up">
               Select your mood and preferences to discover tailored recipes.
-              <br/>
-              Sign in and get started.
             </p>
           </header>
 
           {/* Sign-In Button */}
           <button
             onClick={signInWithGoogle}
-            className="px-6 py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-lg hover:bg-blue-600 transition-transform transform hover:scale-105 animate-bounce-once"
+            className="px-6 py-3 bg-green-500 text-white font-semibold rounded-lg shadow-lg hover:bg-green-600 transition-transform transform hover:scale-105 animate-bounce-once"
 
           >
             Sign in with Google
           </button>
+
+          <img src="/assets/sticker1.png" className="absolute bottom-35 left-24 right-20 w-40 rotate-6 drop-shadow-lg" />
+          <img src="/assets/sticker2.png" className="absolute top-40 right-20 w-44 -rotate-12 drop-shadow-lg" />
+          <img src="/assets/sticker3.png" className="absolute bottom-20 left-32 w-36 rotate-3 drop-shadow-lg" />
+          <img src="/assets/sticker4.png" className="absolute top-30 bottom-20 right-10 h-20 -rotate-6 drop-shadow-lg" />
+          <img src="/assets/sticker5.png" className="absolute bottom-25 right-12 h-24 -rotate-6 drop-shadow-lg" />
+
+
+
 
 
           {/* Tailwind Animations */}

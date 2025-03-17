@@ -1,55 +1,84 @@
 // components/Recipes.tsx
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { getAuth } from "firebase/auth";
 import { doc, updateDoc, arrayUnion } from "firebase/firestore";
 import { db } from "@/auth/firebase";
+import MarkdownDisplay from "./MarkdownDisplay";
 
 type Recipe = {
-  id: number;
+  id: string;
   title: string;
-  image: string;
-  readyInMinutes?: number;
-  servings?: number;
-  sourceUrl?: string;
-  summary?: string;
+  content: string;
 };
 
-const Recipes: React.FC = () => {
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [expandedRecipe, setExpandedRecipe] = useState<number | null>(null);
+interface RecipesProps {
+  geminiSuggestion?: string;
+  modifyRecipe?: (modificationRequest: string) => void;
+}
+
+const Recipes: React.FC<RecipesProps> = ({ geminiSuggestion, modifyRecipe }) => {
+  const [recipe, setRecipe] = useState<Recipe | null>(null);
+  const [modificationText, setModificationText] = useState<string>('');
+  const [isEditing, setIsEditing] = useState<boolean>(false);
 
   useEffect(() => {
-    const fetchRecipes = async () => {
-      try {
-        const response = await fetch("/api/recipes?query=pasta");
-        if (!response.ok) {
-          throw new Error("Failed to fetch recipes");
+    if (geminiSuggestion) {
+      // Split the response into title and content
+      const lines = geminiSuggestion.split('\n');
+      let title = '';
+      let contentLines = [...lines];
+
+      // Look for a title in the first few lines
+      for (let i = 0; i < Math.min(3, contentLines.length); i++) {
+        const line = contentLines[i];
+        if (!line.toLowerCase().includes("okay") && (line.toLowerCase().includes("recipe") || line.match(/^#+ /))) {
+          title = line.replace(/^#+ /, '').replace(' Recipe', '').trim();
+          contentLines.splice(i, 1); // Remove the title line from content
+          break;
         }
-        const data = await response.json();
-        setRecipes(data.results || []);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
       }
-    };
 
-    fetchRecipes();
-  }, []);
+      // If no title found, use the first non-empty line
+      if (!title) {
+        const firstNonEmptyIndex = lines.findIndex(line => line.trim().length > 0);
+        if (firstNonEmptyIndex !== -1) {
+          title = lines[firstNonEmptyIndex];
+          contentLines.splice(firstNonEmptyIndex, 1); // Remove the title line from content
+        } else {
+          title = 'Generated Recipe';
+        }
+      }
 
-  const saveRecipe = async (recipe: Recipe) => {
+      setRecipe({
+        id: Date.now().toString(),
+        title,
+        content: contentLines.join('\n').trim(), // Join remaining lines for content
+      });
+    }
+  }, [geminiSuggestion]);
+
+  const handleModify = () => {
+    if (modifyRecipe && modificationText) {
+      modifyRecipe(modificationText);
+      setModificationText('');
+      setIsEditing(false);
+    }
+  };
+
+  const saveRecipe = async () => {
     const auth = getAuth();
     const user = auth.currentUser;
 
-    if (user) {
+    if (user && recipe) {
       const userRef = doc(db, "users", user.uid);
       try {
         await updateDoc(userRef, {
-          savedRecipes: arrayUnion(recipe),
+          savedRecipes: arrayUnion({
+            id: recipe.id,
+            title: recipe.title,
+            content: recipe.content
+          }),
         });
         alert("Recipe saved!");
       } catch (error) {
@@ -61,71 +90,47 @@ const Recipes: React.FC = () => {
     }
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
-  if (!recipes || recipes.length === 0) return <div>No recipes found</div>;
+  if (!recipe) return null;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {recipes.map((recipe) => (
-        <div
-          key={recipe.id}
-          className="border rounded-lg overflow-hidden shadow-lg bg-white"
-        >
-          <div className="relative h-48 w-full">
-            <Image
-              src={recipe.image}
-              alt={recipe.title}
-              fill
-              className="object-cover"
-            />
-          </div>
-          <div className="p-4">
-            <h3 className="font-bold text-xl mb-2">{recipe.title}</h3>
-            <div className="flex justify-between text-sm text-gray-600 mb-4">
-              {recipe.readyInMinutes && (
-                <span>⏱️ {recipe.readyInMinutes} mins</span>
-              )}
-              {recipe.servings && <span>👥 Serves {recipe.servings}</span>}
-            </div>
-
-            <button
-              onClick={() =>
-                setExpandedRecipe(
-                  expandedRecipe === recipe.id ? null : recipe.id
-                )
-              }
-              className="mb-2 text-blue-600 hover:text-blue-800"
-            >
-              {expandedRecipe === recipe.id ? "Hide Details" : "Show Details"}
-            </button>
-            {expandedRecipe === recipe.id && recipe.summary && (
-              <div
-                className="mt-2 mb-4 text-sm text-gray-700"
-                dangerouslySetInnerHTML={{ __html: recipe.summary }}
-              />
-            )}
-
-            {recipe.sourceUrl && (
-              <a
-                href={recipe.sourceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-              >
-                View Full Recipe
-              </a>
-            )}
-
-            <button
-              onClick={() => saveRecipe(recipe)}
-              className="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
-            >
-              Save Recipe
-            </button>
-          </div>
+    <div className="max-w-7xl mx-auto px-4">
+      <div className="border rounded-lg overflow-hidden shadow-lg bg-white p-6">
+        <h2 className="text-2xl font-bold mb-4">{recipe.title}</h2>
+        <div className="mb-4">
+          <MarkdownDisplay content={recipe.content} />
         </div>
-      ))}
+        <div className="flex gap-4">
+          <button
+            onClick={saveRecipe}
+            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+          >
+            Save Recipe
+          </button>
+          <button
+            onClick={() => setIsEditing(!isEditing)}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          >
+            {isEditing ? "Cancel" : "Edit Recipe"}
+          </button>
+        </div>
+        {isEditing && (
+          <div className="mt-4">
+            <input
+              type="text"
+              value={modificationText}
+              onChange={(e) => setModificationText(e.target.value)}
+              placeholder="Enter modification request..."
+              className="w-full p-2 border rounded"
+            />
+            <button
+              onClick={handleModify}
+              className="mt-2 px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors"
+            >
+              Submit Modifications
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

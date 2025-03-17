@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { Inter } from "next/font/google";
+import { Poppins} from "next/font/google";
 import client from "@/lib/mongodb";
 import Recipes from "@/components/recipes";
 import type { InferGetServerSidePropsType, GetServerSideProps } from "next";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react"; // Add useRef for debouncing
 import { getWeather } from "../lib/weatherService";
 import dotenv from "dotenv";
 import CitySelector from "@/components/CitySelector";
@@ -17,7 +17,7 @@ import { auth } from "@/auth/firebase"; // Import Firebase auth
 import { getAuth, signOut, onAuthStateChanged } from "@firebase/auth";
 import { useRouter } from "next/router";
 import { db, app } from "@/auth/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { User } from "firebase/auth";
 
 dotenv.config({ path: ".env.local" });
@@ -26,7 +26,10 @@ dotenv.config({ path: ".env.local" });
 //   isConnected: boolean;
 // };
 
-const inter = Inter({ subsets: ["latin"] });
+const myFont = Poppins({
+  weight:['400'],
+  subsets: ['latin']
+})
 
 // export const getServerSideProps: GetServerSideProps<
 //   ConnectionStatus
@@ -120,9 +123,17 @@ const Main = () => {
     console.log("City selected:", city);
   };
 
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null); // Ref to store the timeout
+
   const handleStateSelect = (state: string) => {
-    setSelectedState(state);
-    console.log("State selected:", state);
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current); // Clear the previous timeout
+    }
+
+    debounceTimeout.current = setTimeout(() => {
+      setSelectedState(state);
+      console.log("State selected:", state);
+    }, 500); // Delay of 500ms
   };
 
   const handleCookTimeSelect = (cookTime: string) => {
@@ -146,10 +157,6 @@ const Main = () => {
     cookingSkill: string;
   }) => {
     setShowOnboarding(false);
-  };
-
-  const handleSubmit = () => {
-    setShowRecipes(true);
   };
 
   useEffect(() => {
@@ -197,6 +204,32 @@ const Main = () => {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    // Save preferences whenever they change
+    const savePreferences = async () => {
+      if (!user || !selectedCity || !selectedState || !selectedMood || !selectedCookTime) {
+        return;
+      }
+
+      try {
+        const userRef = doc(db, "users", user.uid);
+        await updateDoc(userRef, {
+          preferences: {
+            city: selectedCity,
+            state: selectedState,
+            cookTime: selectedCookTime,
+            mood: selectedMood
+          }
+        });
+        setShowRecipes(true);
+      } catch (error) {
+        console.error("Error saving preferences:", error);
+      }
+    };
+
+    savePreferences();
+  }, [user, selectedCity, selectedState, selectedMood, selectedCookTime]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-100">
@@ -207,16 +240,16 @@ const Main = () => {
 
   return (
     <main
-      className={`flex flex-col items-center min-h-screen p-8 ${inter.className}`}
+      className={`bg-[url('/assets/texture.jpg')] flex flex-col items-center min-h-screen p-8 ${myFont.className}`}
     >
       {showOnboarding ? (
-        <Onboarding onComplete={() => setShowOnboarding(false)} />
+        <Onboarding onComplete={handleOnboardingComplete} />
       ) : (
         <>
 
         {/* Title  */}
           <header className="w-full max-w-5xl text-center mb-12 pt-20">
-            <h1 className="text-4xl font-bold text-blue-600 mb-4">
+            <h1 className="text-4xl font-bold text-green-2000 mb-4">
               Mood to Meal
             </h1>
             <p className="text-gray-700 text-lg">
@@ -229,10 +262,16 @@ const Main = () => {
                   </button>
               </Link>
               <button onClick={handleLogOut} className="px-4 py-2 bg-red-500 text-white rounded-md font-semibold shadow hover:bg-red-600 transition">
-                LOG OUT
+                Log Out
               </button>
             </div>
           </header>
+
+          <img src="/assets/sticker1.png" className="absolute bottom-35 left-24 right-20 w-40 rotate-6 drop-shadow-lg" />
+          <img src="/assets/sticker2.png" className="absolute top-40 right-20 w-44 -rotate-12 drop-shadow-lg" />
+          <img src="/assets/sticker3.png" className="absolute bottom-20 left-12 w-36 rotate-3 drop-shadow-lg" />
+          <img src="/assets/sticker4.png" className="absolute top-30 bottom-20 right-10 h-20 -rotate-6 drop-shadow-lg" />
+          <img src="/assets/sticker5.png" className="absolute bottom-25 right-12 h-24 -rotate-6 drop-shadow-lg" />
 
   
         
@@ -247,52 +286,39 @@ const Main = () => {
                 <MoodSelector onMoodSelect={handleMoodSelect} />
               </div>
 
-              {/* City & State Selector */}
-              <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
-                <h4 className="text-xl font-semibold text-gray-800 mb-4">
-                  Enter your city and state:
-                </h4>
-                <CitySelector city={selectedCity} setCity={handleCitySelect} />
-                {selectedCity && (
-                  <p className="mt-4 text-gray-800">
-                    Your City: {selectedCity}
-                  </p>
-                )}
-
-                <StateSelector
-                  state={selectedState}
-                  setState={handleStateSelect}
-                />
-                {selectedState && (
-                  <p className="mt-4 text-gray-800">
-                    Your State: {selectedState}
-                  </p>
-                )}
-              </div>
-
               {/* Weather Selection */}
               {weather ? (
                 <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
-                  {/* <h4 className="text-xl font-semibold text-gray-800 mb-2">Weather in Nashville{weather.cityName}:</h4> */}
                   <h4 className="text-xl font-semibold text-gray-800 mb-2">
-                    {" "}
                     Weather in {weather.cityName}
                   </h4>
-                  <p className="text-gray-600">
-                    Temperature: {weather.temperature}°F
-                  </p>
-                  <p className="text-gray-600">
-                    Description: {weather.weatherDescription}
-                  </p>
+                  <p className="text-gray-600">Temperature: {weather.temperature}°F</p>
+                  <p className="text-gray-600">Description: {weather.weatherDescription}</p>
                   <p className="text-gray-600">Humidity: {weather.humidity}%</p>
-                  <p className="text-gray-600">
-                    Wind Speed: {weather.windSpeed} m/s
-                  </p>
+                  <p className="text-gray-600">Wind Speed: {weather.windSpeed} m/s</p>
                 </div>
               ) : (
-                <h4 className="bg-white shadow-lg rounded-2xl p-6 mb-8">
-                  Enter City and State to get Weather data
-                </h4>
+                <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
+                  <h4 className="text-xl font-semibold text-gray-800 mb-4">
+                    Enter your city and state:
+                  </h4>
+                  <CitySelector city={selectedCity} setCity={handleCitySelect} />
+                  {selectedCity && (
+                    <p className="mt-4 text-gray-800">
+                      Your City: {selectedCity}
+                    </p>
+                  )}
+
+                  <StateSelector
+                    state={selectedState}
+                    setState={handleStateSelect}
+                  />
+                  {selectedState && (
+                    <p className="mt-4 text-gray-800">
+                      Your State: {selectedState}
+                    </p>
+                  )}
+                </div>
               )}
 
               {/* Dietary Selection */}
@@ -325,14 +351,6 @@ const Main = () => {
                   <p>Your Cook Time: {selectedCookTime} minutes</p>
                 )}
               </div>
-
-              {/* Submit Button */}
-              <button
-                onClick={handleSubmit}
-                className="mt-4 px-6 py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600 transition"
-              >
-                Submit
-              </button>
             </div>
           ) : (
             // Recipes Section
@@ -358,7 +376,12 @@ const Main = () => {
               </p> */}
 
             
-              <Recipes />
+              <Recipes 
+                selectedCity={selectedCity}
+                selectedState={selectedState}
+                selectedMood={selectedMood}
+                selectedCookTime={selectedCookTime}
+              />
             </div>
           )}
         </>

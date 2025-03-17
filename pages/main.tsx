@@ -3,7 +3,7 @@ import { Poppins} from "next/font/google";
 import client from "@/lib/mongodb";
 import Recipes from "@/components/recipes";
 import type { InferGetServerSidePropsType, GetServerSideProps } from "next";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react"; // Add useRef for debouncing
 import { getWeather } from "../lib/weatherService";
 import dotenv from "dotenv";
 import CitySelector from "@/components/CitySelector";
@@ -123,9 +123,17 @@ const Main = () => {
     console.log("City selected:", city);
   };
 
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null); // Ref to store the timeout
+
   const handleStateSelect = (state: string) => {
-    setSelectedState(state);
-    console.log("State selected:", state);
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current); // Clear the previous timeout
+    }
+
+    debounceTimeout.current = setTimeout(() => {
+      setSelectedState(state);
+      console.log("State selected:", state);
+    }, 500); // Delay of 500ms
   };
 
   const handleCookTimeSelect = (cookTime: string) => {
@@ -278,52 +286,39 @@ const Main = () => {
                 <MoodSelector onMoodSelect={handleMoodSelect} />
               </div>
 
-              {/* City & State Selector */}
-              <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
-                <h4 className="text-xl font-semibold text-gray-800 mb-4">
-                  Enter your city and state:
-                </h4>
-                <CitySelector city={selectedCity} setCity={handleCitySelect} />
-                {selectedCity && (
-                  <p className="mt-4 text-gray-800">
-                    Your City: {selectedCity}
-                  </p>
-                )}
-
-                <StateSelector
-                  state={selectedState}
-                  setState={handleStateSelect}
-                />
-                {selectedState && (
-                  <p className="mt-4 text-gray-800">
-                    Your State: {selectedState}
-                  </p>
-                )}
-              </div>
-
               {/* Weather Selection */}
               {weather ? (
                 <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
-                  {/* <h4 className="text-xl font-semibold text-gray-800 mb-2">Weather in Nashville{weather.cityName}:</h4> */}
                   <h4 className="text-xl font-semibold text-gray-800 mb-2">
-                    {" "}
                     Weather in {weather.cityName}
                   </h4>
-                  <p className="text-gray-600">
-                    Temperature: {weather.temperature}°F
-                  </p>
-                  <p className="text-gray-600">
-                    Description: {weather.weatherDescription}
-                  </p>
+                  <p className="text-gray-600">Temperature: {weather.temperature}°F</p>
+                  <p className="text-gray-600">Description: {weather.weatherDescription}</p>
                   <p className="text-gray-600">Humidity: {weather.humidity}%</p>
-                  <p className="text-gray-600">
-                    Wind Speed: {weather.windSpeed} m/s
-                  </p>
+                  <p className="text-gray-600">Wind Speed: {weather.windSpeed} m/s</p>
                 </div>
               ) : (
-                <h4 className="bg-white shadow-lg rounded-2xl p-6 mb-8">
-                  Enter City and State to get Weather data
-                </h4>
+                <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
+                  <h4 className="text-xl font-semibold text-gray-800 mb-4">
+                    Enter your city and state:
+                  </h4>
+                  <CitySelector city={selectedCity} setCity={handleCitySelect} />
+                  {selectedCity && (
+                    <p className="mt-4 text-gray-800">
+                      Your City: {selectedCity}
+                    </p>
+                  )}
+
+                  <StateSelector
+                    state={selectedState}
+                    setState={handleStateSelect}
+                  />
+                  {selectedState && (
+                    <p className="mt-4 text-gray-800">
+                      Your State: {selectedState}
+                    </p>
+                  )}
+                </div>
               )}
 
               {/* Dietary Selection */}

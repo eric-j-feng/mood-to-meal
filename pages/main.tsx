@@ -117,10 +117,18 @@ const Main = () => {
   // const [dietaryRestrictions, setDietaryRestrictions] = useState<string[]>([]); // State for dietary restrictions
   const [userId, setUserId] = useState<string | null>(null); // State for user ID
   const [loading, setLoading] = useState(true);
+  const [manualWeatherInput, setManualWeatherInput] = useState(false);
+  const [manualWeatherData, setManualWeatherData] = useState<WeatherData | null>(null);
+  const [manualLocationInput, setManualLocationInput] = useState(false); // State to toggle manual location input
 
   const handleCitySelect = (city: string) => {
     setSelectedCity(city);
     console.log("City selected:", city);
+
+    // Fetch weather if both city and state are selected
+    if (city && selectedState) {
+      fetchWeather(city, selectedState);
+    }
   };
 
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null); // Ref to store the timeout
@@ -133,6 +141,11 @@ const Main = () => {
     debounceTimeout.current = setTimeout(() => {
       setSelectedState(state);
       console.log("State selected:", state);
+
+      // Fetch weather if both city and state are selected
+      if (selectedCity && state) {
+        fetchWeather(selectedCity, state);
+      }
     }, 500); // Delay of 500ms
   };
 
@@ -157,6 +170,33 @@ const Main = () => {
     cookingSkill: string;
   }) => {
     setShowOnboarding(false);
+  };
+
+  const handleManualWeatherSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedCity && selectedState) {
+      try {
+        const weatherData = await getWeather(selectedCity, selectedState, false);
+        if (weatherData) {
+          setWeather(weatherData);
+          setManualLocationInput(false);
+        }
+      } catch (error) {
+        console.error("Error fetching weather:", error);
+      }
+    }
+  };
+
+  const fetchWeather = async (city: string | null, state: string | null) => {
+    try {
+      const weatherData = await getWeather(city, state, false); // Fetch weather using city and state
+      if (weatherData) {
+        setWeather(weatherData);
+        console.log("Weather updated:", weatherData);
+      }
+    } catch (error) {
+      console.error("Error fetching weather:", error);
+    }
   };
 
   useEffect(() => {
@@ -287,17 +327,7 @@ const Main = () => {
               </div>
 
               {/* Weather Selection */}
-              {weather ? (
-                <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
-                  <h4 className="text-xl font-semibold text-gray-800 mb-2">
-                    Weather in {weather.cityName}
-                  </h4>
-                  <p className="text-gray-600">Temperature: {weather.temperature}°F</p>
-                  <p className="text-gray-600">Description: {weather.weatherDescription}</p>
-                  <p className="text-gray-600">Humidity: {weather.humidity}%</p>
-                  <p className="text-gray-600">Wind Speed: {weather.windSpeed} m/s</p>
-                </div>
-              ) : (
+              {manualLocationInput ? (
                 <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
                   <h4 className="text-xl font-semibold text-gray-800 mb-4">
                     Enter your city and state:
@@ -308,7 +338,6 @@ const Main = () => {
                       Your City: {selectedCity}
                     </p>
                   )}
-
                   <StateSelector
                     state={selectedState}
                     setState={handleStateSelect}
@@ -318,7 +347,52 @@ const Main = () => {
                       Your State: {selectedState}
                     </p>
                   )}
+                  <button
+                    onClick={handleManualWeatherSubmit}
+                    className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md font-semibold shadow hover:bg-blue-600 transition"
+                  >
+                    Submit Location
+                  </button>
+                  <>  </>
+                  <button
+                    onClick={() => setManualLocationInput(false)}
+                    className="mt-4 px-4 py-2 bg-gray-500 text-white rounded-md font-semibold shadow hover:bg-gray-600 transition"
+                  >
+                    Use Automatic Location
+                  </button>
                 </div>
+              ) : (
+                <>
+                  {weather ? (
+                    <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
+                      <h4 className="text-xl font-semibold text-gray-800 mb-2">
+                        Weather in {weather.cityName}
+                      </h4>
+                      <p className="text-gray-600">Temperature: {weather.temperature}°F</p>
+                      <p className="text-gray-600">Description: {weather.weatherDescription}</p>
+                      <p className="text-gray-600">Humidity: {weather.humidity}%</p>
+                      <p className="text-gray-600">Wind Speed: {weather.windSpeed} m/s</p>
+                      <button
+                        onClick={() => setManualLocationInput(true)}
+                        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md font-semibold shadow hover:bg-blue-600 transition"
+                      >
+                        Enter Location Manually
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
+                      <h4 className="text-xl font-semibold text-gray-800 mb-2">
+                        Weather data not available
+                      </h4>
+                      <button
+                        onClick={() => setManualLocationInput(true)}
+                        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md font-semibold shadow hover:bg-blue-600 transition"
+                      >
+                        Enter Location Manually
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
 
               {/* Dietary Selection */}

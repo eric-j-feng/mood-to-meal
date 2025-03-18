@@ -10,6 +10,7 @@ type Recipe = {
   id: string;
   title: string;
   content: string;
+  rating: number;
 };
 
 const SavedRecipes: React.FC = () => {
@@ -18,6 +19,11 @@ const SavedRecipes: React.FC = () => {
   const [error, setError] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
   const [expandedRecipe, setExpandedRecipe] = useState<string | null>(null);
+  const [newRating, setNewRating] = useState<number | null>(null);
+  const [editingRecipeId, setEditingRecipeId] = useState<string | null>(null);
+
+
+
 
   useEffect(() => {
     const auth = getAuth();
@@ -42,7 +48,8 @@ const SavedRecipes: React.FC = () => {
           const userDoc = await getDoc(userRef);
           if (userDoc.exists()) {
             const userData = userDoc.data();
-            setRecipes(userData.savedRecipes || []);
+            const sortedRecipes = (userData.savedRecipes || []).sort((a: Recipe, b: Recipe) => b.rating - a.rating);
+            setRecipes(sortedRecipes || []);
           } else {
             setRecipes([]);
           }
@@ -71,6 +78,56 @@ const SavedRecipes: React.FC = () => {
       } catch (error) {
         console.error("Error removing recipe: ", error);
         alert("Failed to remove recipe.");
+      }
+    }
+  };
+
+
+  // const updateRating = async (recipeId: string, rating: number) => {
+  //   if (userId) {
+  //     const userRef = doc(db, "users", userId);
+  //     try {
+  //       const updatedRecipes = recipes.map((recipe) =>
+  //         recipe.id === recipeId ? { ...recipe, rating } : recipe
+  //       );
+  //       await updateDoc(userRef, {
+  //         savedRecipes: updatedRecipes,
+  //       });
+  //       setRecipes(updatedRecipes);
+  //       setEditingRecipeId(null);
+  //     } catch (error) {
+  //       console.error("Error updating rating: ", error);
+  //       alert("Failed to update rating.");
+  //     }
+  //   }
+  // };
+
+
+  const updateRating = async (recipeId: string) => {
+    if (userId && newRating !== null) {
+      const userRef = doc(db, "users", userId);
+      try {
+        const userDoc = await getDoc(userRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const updatedRecipes = userData.savedRecipes.map((recipe: Recipe) =>
+            recipe.id === recipeId ? { ...recipe, rating: newRating } : recipe
+          );
+
+          await updateDoc(userRef, {
+            savedRecipes: updatedRecipes,
+          });
+
+          const sortedRecipes = (updatedRecipes || []).sort((a: Recipe, b: Recipe) => b.rating - a.rating);
+
+
+          setRecipes(sortedRecipes);
+          setEditingRecipeId(null);
+          setNewRating(null);
+        }
+      } catch (error) {
+        console.error("Error updating rating: ", error);
+        alert("Failed to update rating.");
       }
     }
   };
@@ -108,6 +165,76 @@ const SavedRecipes: React.FC = () => {
                 <MarkdownDisplay content={recipe.content} />
               </div>
             )}
+
+            {/* Recipe Rating */}
+
+
+            <div>
+              {recipe.rating === 0 ? "Current Rating: Not Set" : `Current Rating: ${recipe.rating}/5`}
+              <br/>
+              {editingRecipeId === recipe.id ? (
+                <>
+                  <select
+                    value={newRating ?? recipe.rating}
+                    onChange={(e) => setNewRating(Number(e.target.value))}
+                    className="mt-2 px-2 py-1 border rounded"
+                  >
+                    {[0, 1, 2, 3, 4, 5].map((num) => (
+                      <option key={num} value={num}>{num}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={() => updateRating(recipe.id)}
+                    className="ml-2 px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                  >
+                    Save
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setEditingRecipeId(recipe.id)}
+                  className="mt-2 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                >
+                  Edit Rating
+                </button>
+              )}
+            </div>
+            {/* <div>
+              {recipe.rating === 0 ? "Current Rating: Not Set" : `Current Rating: ${recipe.rating}/5`}
+              <br/>
+              {editingRecipeId === recipe.id ? (
+                <select
+                  value={newRating ?? recipe.rating}
+                  onChange={(e) => setNewRating(Number(e.target.value))}
+                  onBlur={() => {
+                    if (newRating !== null) updateRating(recipe.id, newRating);
+                  }}
+                  className="mt-2 px-2 py-1 border rounded"
+                >
+                  {[0, 1, 2, 3, 4, 5].map((num) => (
+                    <option key={num} value={num}>{num}</option>
+                  ))}
+                </select>
+              ) : (
+                <button
+                  onClick={() => setEditingRecipeId(recipe.id)}
+                  className="mt-2 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                >
+                  Edit Rating
+                </button>
+              )}
+            </div> */}
+
+            {/* <div>
+              {recipe.rating === 0 ? "Current Rating: Not Set" : recipe.rating}
+              <br/>
+              <button
+                onClick={() => setEditingRecipeId(recipe.id)}
+                className="mt-2 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+              >
+                Edit Rating
+              </button>
+            </div> */}
 
             {/* Remove Recipe Button */}
             <button

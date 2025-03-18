@@ -10,6 +10,7 @@ type Recipe = {
   id: string;
   title: string;
   content: string;
+  rating: number;
 };
 
 interface RecipesProps {
@@ -54,6 +55,7 @@ const Recipes: React.FC<RecipesProps> = ({ geminiSuggestion, modifyRecipe }) => 
         id: Date.now().toString(),
         title,
         content: contentLines.join('\n').trim(), // Join remaining lines for content
+        rating: 0
       });
     }
   }, [geminiSuggestion]);
@@ -77,7 +79,8 @@ const Recipes: React.FC<RecipesProps> = ({ geminiSuggestion, modifyRecipe }) => 
           savedRecipes: arrayUnion({
             id: recipe.id,
             title: recipe.title,
-            content: recipe.content
+            content: recipe.content,
+            rating: 0
           }),
         });
         alert("Recipe saved!");

@@ -142,7 +142,7 @@ const Recipes: React.FC<RecipesProps> = ({
             </button>
           </div>
         )}
-        <div>
+        {/*<div>
           <h3>Recipes Component</h3>
           <p>
             <strong>City:</strong> {selectedCity || "Not selected"}
@@ -156,8 +156,8 @@ const Recipes: React.FC<RecipesProps> = ({
           <p>
             <strong>Cook Time:</strong> {selectedCookTime || "Not selected"} minutes
           </p>
-          {/* Add logic to display recipes based on the props */}
-        </div>
+          // Add logic to display recipes based on the props
+        </div> */}
       </div>
     </div>
   );

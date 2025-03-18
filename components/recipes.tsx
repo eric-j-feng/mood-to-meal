@@ -1,5 +1,3 @@
-// components/Recipes.tsx
-
 import { useEffect, useState } from "react";
 import { getAuth } from "firebase/auth";
 import { doc, updateDoc, arrayUnion } from "firebase/firestore";
@@ -15,9 +13,20 @@ type Recipe = {
 interface RecipesProps {
   geminiSuggestion?: string;
   modifyRecipe?: (modificationRequest: string) => void;
+  selectedCity: string | null;
+  selectedState: string | null;
+  selectedMood: string | null;
+  selectedCookTime: string | null;
 }
 
-const Recipes: React.FC<RecipesProps> = ({ geminiSuggestion, modifyRecipe }) => {
+const Recipes: React.FC<RecipesProps> = ({
+  geminiSuggestion,
+  modifyRecipe,
+  selectedCity,
+  selectedState,
+  selectedMood,
+  selectedCookTime,
+}) => {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [modificationText, setModificationText] = useState<string>('');
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -130,6 +139,22 @@ const Recipes: React.FC<RecipesProps> = ({ geminiSuggestion, modifyRecipe }) => 
             </button>
           </div>
         )}
+        <div>
+          <h3>Recipes Component</h3>
+          <p>
+            <strong>City:</strong> {selectedCity || "Not selected"}
+          </p>
+          <p>
+            <strong>State:</strong> {selectedState || "Not selected"}
+          </p>
+          <p>
+            <strong>Mood:</strong> {selectedMood || "Not selected"}
+          </p>
+          <p>
+            <strong>Cook Time:</strong> {selectedCookTime || "Not selected"} minutes
+          </p>
+          {/* Add logic to display recipes based on the props */}
+        </div>
       </div>
     </div>
   );

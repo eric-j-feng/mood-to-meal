@@ -3,6 +3,7 @@ import { getAuth } from "firebase/auth";
 import { doc, updateDoc, arrayUnion } from "firebase/firestore";
 import { db } from "@/auth/firebase";
 import MarkdownDisplay from "./MarkdownDisplay";
+import ShoppingList from "./ShoppingList";
 
 type Recipe = {
   id: string;
@@ -31,6 +32,8 @@ const Recipes: React.FC<RecipesProps> = ({
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [modificationText, setModificationText] = useState<string>('');
   const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [ingredients, setIngredients] = useState<string>('');
+  const [isRecipeSaved, setIsRecipeSaved] = useState<boolean>(false); // New state to track if the recipe is saved
 
   useEffect(() => {
     if (geminiSuggestion) {
@@ -38,6 +41,7 @@ const Recipes: React.FC<RecipesProps> = ({
       const lines = geminiSuggestion.split('\n');
       let title = '';
       let contentLines = [...lines];
+      let ingredients = '';
 
       // Look for a title in the first few lines
       for (let i = 0; i < Math.min(3, contentLines.length); i++) {
@@ -60,12 +64,23 @@ const Recipes: React.FC<RecipesProps> = ({
         }
       }
 
+      // Extract ingredients between "Ingredients" and "Instructions"
+      const content = contentLines.join('\n').trim();
+      const ingredientsStart = content.toLowerCase().indexOf('ingredients');
+      const instructionsStart = content.toLowerCase().indexOf('instructions');
+      if (ingredientsStart !== -1 && instructionsStart !== -1 && instructionsStart > ingredientsStart) {
+        ingredients = content.substring(ingredientsStart + 'ingredients'.length, instructionsStart).trim();
+      }
+
       setRecipe({
         id: Date.now().toString(),
         title,
-        content: contentLines.join('\n').trim(), // Join remaining lines for content
+        content, // Full content
         rating: 0
       });
+
+      // Store the extracted ingredients in a separate state
+      setIngredients(ingredients);
     }
   }, [geminiSuggestion]);
 
@@ -92,6 +107,7 @@ const Recipes: React.FC<RecipesProps> = ({
             rating: 0
           }),
         });
+        setIsRecipeSaved(true); // Mark the recipe as saved
         alert("Recipe saved!");
       } catch (error) {
         console.error("Error saving recipe: ", error);
@@ -140,6 +156,11 @@ const Recipes: React.FC<RecipesProps> = ({
             >
               Submit Modifications
             </button>
+          </div>
+        )}
+        {isRecipeSaved && ingredients && (
+          <div className="mt-6">
+            <ShoppingList ingredients={ingredients} />
           </div>
         )}
         {/*<div>

@@ -5,6 +5,8 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, updateDoc, arrayRemove } from "firebase/firestore";
 import { db } from "@/auth/firebase";
 import MarkdownDisplay from "./MarkdownDisplay";
+import React from "react";
+import { useRouter } from "next/router";
 
 type Recipe = {
   id: string;
@@ -13,17 +15,33 @@ type Recipe = {
   rating: number;
 };
 
-const SavedRecipes: React.FC = () => {
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
+interface SavedRecipe {
+  id: string;
+  title: string;
+  content: string;
+}
+
+interface SavedRecipesProps {
+  recipes: SavedRecipe[];
+  setRecipes: React.Dispatch<React.SetStateAction<SavedRecipe[]>>;
+}
+
+const SavedRecipes: React.FC<SavedRecipesProps> = ({ recipes, setRecipes }) => {
+  const router = useRouter();
+
+  const handleViewShoppingList = (ingredients: string) => {
+    router.push({
+      pathname: "/ShoppingListPage",
+      query: { ingredients },
+    });
+  };
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
   const [expandedRecipe, setExpandedRecipe] = useState<string | null>(null);
   const [newRating, setNewRating] = useState<number | null>(null);
   const [editingRecipeId, setEditingRecipeId] = useState<string | null>(null);
-
-
-
 
   useEffect(() => {
     const auth = getAuth();
@@ -64,44 +82,23 @@ const SavedRecipes: React.FC = () => {
     fetchSavedRecipes();
   }, [userId]);
 
-  const removeRecipe = async (recipe: Recipe) => {
-    if (userId) {
-      const userRef = doc(db, "users", userId);
-      try {
-        await updateDoc(userRef, {
-          savedRecipes: arrayRemove(recipe),
-        });
-        setRecipes((prevRecipes) =>
-          prevRecipes.filter((r) => r.id !== recipe.id)
-        );
-        alert("Recipe removed!");
-      } catch (error) {
-        console.error("Error removing recipe: ", error);
-        alert("Failed to remove recipe.");
+  const removeRecipe = async (recipe: SavedRecipe) => {
+      if (userId) {
+        const userRef = doc(db, "users", userId);
+        try {
+          await updateDoc(userRef, {
+            savedRecipes: arrayRemove({ ...recipe, rating: 0 }),
+          });
+          setRecipes((prevRecipes) =>
+            prevRecipes.filter((r) => r.id !== recipe.id)
+          );
+          alert("Recipe removed!");
+        } catch (error) {
+          console.error("Error removing recipe: ", error);
+          alert("Failed to remove recipe.");
+        }
       }
-    }
-  };
-
-
-  // const updateRating = async (recipeId: string, rating: number) => {
-  //   if (userId) {
-  //     const userRef = doc(db, "users", userId);
-  //     try {
-  //       const updatedRecipes = recipes.map((recipe) =>
-  //         recipe.id === recipeId ? { ...recipe, rating } : recipe
-  //       );
-  //       await updateDoc(userRef, {
-  //         savedRecipes: updatedRecipes,
-  //       });
-  //       setRecipes(updatedRecipes);
-  //       setEditingRecipeId(null);
-  //     } catch (error) {
-  //       console.error("Error updating rating: ", error);
-  //       alert("Failed to update rating.");
-  //     }
-  //   }
-  // };
-
+    };
 
   const updateRating = async (recipeId: string) => {
     if (userId && newRating !== null) {
@@ -120,7 +117,6 @@ const SavedRecipes: React.FC = () => {
 
           const sortedRecipes = (updatedRecipes || []).sort((a: Recipe, b: Recipe) => b.rating - a.rating);
 
-
           setRecipes(sortedRecipes);
           setEditingRecipeId(null);
           setNewRating(null);
@@ -132,122 +128,81 @@ const SavedRecipes: React.FC = () => {
     }
   };
 
+  const addRecipe = (newRecipe: any) => {
+    setRecipes((prevRecipes) => [...prevRecipes, newRecipe]);
+  };
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
   if (!recipes || recipes.length === 0)
     return <div>No saved recipes found</div>;
 
   return (
-    <div className="grid grid-cols-1 gap-6">
+    <div>
       {recipes.map((recipe) => (
-        <div
-          key={recipe.id}
-          className="border rounded-lg overflow-hidden shadow-lg bg-white"
-        >
-          <div className="p-4">
-            <h3 className="font-bold text-xl mb-2">{recipe.title}</h3>
+        <div key={recipe.id} className="border rounded-lg p-4 mb-4 shadow">
+          <h3 className="text-lg font-bold">{recipe.title}</h3>
+          <p className="text-gray-700 mt-2">{recipe.content.substring(0, 100)}...</p>
 
-            {/* Toggle Content Button */}
+          {/* Buttons for each recipe */}
+          <div className="flex gap-4 mt-4">
+            {/* View Shopping List Button */}
             <button
-              onClick={() =>
-                setExpandedRecipe(
-                  expandedRecipe === recipe.id ? null : recipe.id
-                )
-              }
-              className="mb-2 text-blue-600 hover:text-blue-800"
+              onClick={() => handleViewShoppingList(recipe.content)}
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
             >
-              {expandedRecipe === recipe.id ? "Hide Details" : "Show Details"}
+              View Shopping List
             </button>
-
-            {/* Recipe Content */}
-            {expandedRecipe === recipe.id && (
-              <div className="mt-4 mb-4">
-                <MarkdownDisplay content={recipe.content} />
-              </div>
-            )}
-
-            {/* Recipe Rating */}
-
-
-            <div>
-              {recipe.rating === 0 ? "Current Rating: Not Set" : `Current Rating: ${recipe.rating}/5`}
-              <br/>
-              {editingRecipeId === recipe.id ? (
-                <>
-                  <select
-                    value={newRating ?? recipe.rating}
-                    onChange={(e) => setNewRating(Number(e.target.value))}
-                    className="mt-2 px-2 py-1 border rounded"
-                  >
-                    {[0, 1, 2, 3, 4, 5].map((num) => (
-                      <option key={num} value={num}>{num}</option>
-                    ))}
-                  </select>
-                  <button
-                    onClick={() => updateRating(recipe.id)}
-                    className="ml-2 px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
-                  >
-                    Save
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={() => setEditingRecipeId(recipe.id)}
-                  className="mt-2 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-                >
-                  Edit Rating
-                </button>
-              )}
-            </div>
-            {/* <div>
-              {recipe.rating === 0 ? "Current Rating: Not Set" : `Current Rating: ${recipe.rating}/5`}
-              <br/>
-              {editingRecipeId === recipe.id ? (
-                <select
-                  value={newRating ?? recipe.rating}
-                  onChange={(e) => setNewRating(Number(e.target.value))}
-                  onBlur={() => {
-                    if (newRating !== null) updateRating(recipe.id, newRating);
-                  }}
-                  className="mt-2 px-2 py-1 border rounded"
-                >
-                  {[0, 1, 2, 3, 4, 5].map((num) => (
-                    <option key={num} value={num}>{num}</option>
-                  ))}
-                </select>
-              ) : (
-                <button
-                  onClick={() => setEditingRecipeId(recipe.id)}
-                  className="mt-2 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-                >
-                  Edit Rating
-                </button>
-              )}
-            </div> */}
-
-            {/* <div>
-              {recipe.rating === 0 ? "Current Rating: Not Set" : recipe.rating}
-              <br/>
-              <button
-                onClick={() => setEditingRecipeId(recipe.id)}
-                className="mt-2 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-              >
-                Edit Rating
-              </button>
-            </div> */}
 
             {/* Remove Recipe Button */}
             <button
               onClick={() => removeRecipe(recipe)}
-              className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
             >
-              Remove
+              Remove Recipe
             </button>
+
+            {/* Update Rating Button */}
+            {editingRecipeId === recipe.id ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  value={newRating || ""}
+                  onChange={(e) => setNewRating(Number(e.target.value))}
+                  className="w-16 p-1 border rounded"
+                />
+                <button
+                  onClick={() => updateRating(recipe.id)}
+                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
+                >
+                  Save Rating
+                </button>
+                <button
+                  onClick={() => setEditingRecipeId(null)}
+                  className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setEditingRecipeId(recipe.id)}
+                className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition"
+              >
+                Update Rating
+              </button>
+            )}
           </div>
         </div>
       ))}
     </div>
   );
+};
+
+const ParentComponent: React.FC = () => {
+  const [recipes, setRecipes] = useState<any[]>([]);
+
+  return <SavedRecipes recipes={recipes} setRecipes={setRecipes} />;
 };
 
 export default SavedRecipes;

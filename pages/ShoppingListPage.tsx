@@ -1,11 +1,15 @@
 import React from "react";
+import { useRouter } from "next/router";
 import ShoppingList from "../components/ShoppingList";
 
-interface ShoppingListPageProps {
-  ingredients: string;
-}
+const ShoppingListPage: React.FC = () => {
+  const router = useRouter();
+  const { ingredients } = router.query;
 
-const ShoppingListPage: React.FC<ShoppingListPageProps> = ({ ingredients }) => {
+  if (!ingredients || typeof ingredients !== "string") {
+    return <p>No ingredients found.</p>;
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4">
       <h1 className="text-3xl font-bold mb-6">Your Shopping List</h1>

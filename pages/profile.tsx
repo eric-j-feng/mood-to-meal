@@ -71,6 +71,12 @@ interface Preferences {
   utensils: Record<string, number>;
 }
 
+interface SavedRecipe {
+  id: string;
+  title: string;
+  content: string;
+}
+
 export default function Profile() {
   const [preferences, setPreferences] = useState<Preferences>({
     dietaryRestrictions: [],
@@ -85,6 +91,7 @@ export default function Profile() {
   const [newUtensilName, setNewUtensilName] = useState("");
   const [newUtensilQuantity, setNewUtensilQuantity] = useState(0);
   const [customUtensils, setCustomUtensils] = useState<string[]>([]);
+  const [savedRecipes, setSavedRecipes] = useState<SavedRecipe[]>([]);
 
   const router = useRouter();
 
@@ -112,6 +119,7 @@ export default function Profile() {
             (utensil) => !utensilOptions.includes(utensil)
           )
         );
+        setSavedRecipes(userData.savedRecipes || []);
       }
       setLoading(false);
     });
@@ -377,7 +385,7 @@ export default function Profile() {
 
       <div className="mt-6 bg-white p-6 shadow-lg rounded-lg">
         <h2 className="text-xl font-semibold">Saved Recipes</h2>
-        <SavedRecipes />
+        <SavedRecipes recipes={savedRecipes} setRecipes={setSavedRecipes} />
       </div>
     </div>
   );

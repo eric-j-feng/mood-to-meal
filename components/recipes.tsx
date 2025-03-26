@@ -29,21 +29,26 @@ const Recipes: React.FC<RecipesProps> = ({
   selectedCookTime,
 }) => {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
-  const [modificationText, setModificationText] = useState<string>('');
+  const [modificationText, setModificationText] = useState<string>("");
   const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [isRating, setIsRating] = useState<boolean>(false);
+  const [rating, setRating] = useState<number>(0);
 
   useEffect(() => {
     if (geminiSuggestion) {
       // Split the response into title and content
-      const lines = geminiSuggestion.split('\n');
-      let title = '';
+      const lines = geminiSuggestion.split("\n");
+      let title = "";
       let contentLines = [...lines];
 
       // Look for a title in the first few lines
       for (let i = 0; i < Math.min(3, contentLines.length); i++) {
         const line = contentLines[i];
-        if (!line.toLowerCase().includes("okay") && (line.toLowerCase().includes("recipe") || line.match(/^#+ /))) {
-          title = line.replace(/^#+ /, '').replace(' Recipe', '').trim();
+        if (
+          !line.toLowerCase().includes("okay") &&
+          (line.toLowerCase().includes("recipe") || line.match(/^#+ /))
+        ) {
+          title = line.replace(/^#+ /, "").replace(" Recipe", "").trim();
           contentLines.splice(i, 1); // Remove the title line from content
           break;
         }
@@ -51,20 +56,22 @@ const Recipes: React.FC<RecipesProps> = ({
 
       // If no title found, use the first non-empty line
       if (!title) {
-        const firstNonEmptyIndex = lines.findIndex(line => line.trim().length > 0);
+        const firstNonEmptyIndex = lines.findIndex(
+          (line) => line.trim().length > 0
+        );
         if (firstNonEmptyIndex !== -1) {
           title = lines[firstNonEmptyIndex];
           contentLines.splice(firstNonEmptyIndex, 1); // Remove the title line from content
         } else {
-          title = 'Generated Recipe';
+          title = "Generated Recipe";
         }
       }
 
       setRecipe({
         id: Date.now().toString(),
         title,
-        content: contentLines.join('\n').trim(), // Join remaining lines for content
-        rating: 0
+        content: contentLines.join("\n").trim(), // Join remaining lines for content
+        rating: 0,
       });
     }
   }, [geminiSuggestion]);
@@ -72,12 +79,16 @@ const Recipes: React.FC<RecipesProps> = ({
   const handleModify = () => {
     if (modifyRecipe && modificationText) {
       modifyRecipe(modificationText);
-      setModificationText('');
+      setModificationText("");
       setIsEditing(false);
     }
   };
 
-  const saveRecipe = async () => {
+  const saveRecipe = () => {
+    setIsRating(true);
+  };
+
+  const handleRating = async () => {
     const auth = getAuth();
     const user = auth.currentUser;
 
@@ -89,10 +100,11 @@ const Recipes: React.FC<RecipesProps> = ({
             id: recipe.id,
             title: recipe.title,
             content: recipe.content,
-            rating: 0
+            rating: rating,
           }),
         });
         alert("Recipe saved!");
+        setIsRating(false);
       } catch (error) {
         console.error("Error saving recipe: ", error);
         alert("Failed to save recipe.");
@@ -142,22 +154,31 @@ const Recipes: React.FC<RecipesProps> = ({
             </button>
           </div>
         )}
-        {/*<div>
-          <h3>Recipes Component</h3>
-          <p>
-            <strong>City:</strong> {selectedCity || "Not selected"}
-          </p>
-          <p>
-            <strong>State:</strong> {selectedState || "Not selected"}
-          </p>
-          <p>
-            <strong>Mood:</strong> {selectedMood || "Not selected"}
-          </p>
-          <p>
-            <strong>Cook Time:</strong> {selectedCookTime || "Not selected"} minutes
-          </p>
-          // Add logic to display recipes based on the props
-        </div> */}
+        {isRating && (
+          <div className="mt-4">
+            <label className="block">
+              <span className="font-semibold">Rate this Recipe:</span>
+              <select
+                value={rating}
+                onChange={(e) => setRating(parseInt(e.target.value))}
+                className="block w-full mt-2 p-2 border rounded"
+              >
+                <option value={0}>Select Rating</option>
+                <option value={1}>1 - Poor</option>
+                <option value={2}>2 - Fair</option>
+                <option value={3}>3 - Good</option>
+                <option value={4}>4 - Very Good</option>
+                <option value={5}>5 - Excellent</option>
+              </select>
+            </label>
+            <button
+              onClick={handleRating}
+              className="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+            >
+              Submit Rating
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

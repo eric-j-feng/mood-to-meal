@@ -10,6 +10,7 @@ import CitySelector from "@/components/CitySelector";
 import StateSelector from "@/components/StateSelector";
 import CookTimeSelector from "@/components/CookTimeSelector";
 import MoodSelector from "@/components/MoodSelector";
+import MealSelector from "@/components/MealTypeSelector";
 // import DietarySelector from "@/components/DietarySelector"; // Import DietarySelector
 import GeminiChat from "@/components/GeminiChat";
 import Onboarding from "@/components/Onboarding";
@@ -112,6 +113,7 @@ const Main = () => {
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [selectedState, setSelectedState] = useState<string | null>(null);
   const [selectedCookTime, setSelectedCookTime] = useState<string | null>(null);
+  const [selectedMealType, setSelectedMealType] = useState<string | null>(null);
   const [showRecipes, setShowRecipes] = useState(false);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   // const [dietaryRestrictions, setDietaryRestrictions] = useState<string[]>([]); // State for dietary restrictions
@@ -158,6 +160,11 @@ const Main = () => {
     setSelectedMood(mood); // Update the selected mood
     console.log("Mood selected:", mood); // Log the selected mood
     // send to the backend here
+  };
+
+  const handleMealTypeSelect = (mealType: string) => {
+    setSelectedMealType(mealType);
+    console.log("Meal Type selected:", mealType);
   };
 
   // const handleDietaryChange = (restrictions: string[]) => {
@@ -424,6 +431,21 @@ const Main = () => {
                 {selectedCookTime && (
                   <p>Your Cook Time: {selectedCookTime} minutes</p>
                 )}
+              </div>
+
+
+
+
+              {/* Type of Meal Selector */}
+              <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
+                <h4 className="text-xl font-semibold text-gray-800 mb-4">
+                  Type of Meal: 
+                </h4>
+                <MealSelector
+                  meal={selectedMealType}
+                  setMeal={handleMealTypeSelect}
+                />
+              
               </div>
             </div>
           ) : (

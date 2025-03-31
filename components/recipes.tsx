@@ -163,9 +163,8 @@ const Recipes: React.FC<RecipesProps> = ({
         title,
         content, // Full content
         ingredients, // Include the extracted ingredients here
-        rating: 0
-        content: contentLines.join("\n").trim(), // Join remaining lines for content
         rating: 0,
+        content: contentLines.join("\n").trim(), // Join remaining lines for content
         tags,
       });
 

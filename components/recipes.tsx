@@ -4,11 +4,35 @@ import { doc, updateDoc, arrayUnion } from "firebase/firestore";
 import { db } from "@/auth/firebase";
 import MarkdownDisplay from "./MarkdownDisplay";
 
+const tagColorMap: { [key: string]: string } = {
+  Breakfast: "bg-yellow-100 text-yellow-800",
+  Lunch: "bg-blue-100 text-blue-800",
+  Dinner: "bg-purple-100 text-purple-800",
+  Snack: "bg-pink-100 text-pink-800",
+  Vegetarian: "bg-green-100 text-green-800",
+  Vegan: "bg-emerald-100 text-emerald-800",
+  "Gluten-Free": "bg-orange-100 text-orange-800",
+  "Low-Carb": "bg-lime-100 text-lime-800",
+  "High-Protein": "bg-indigo-100 text-indigo-800",
+  "Comfort Food": "bg-rose-100 text-rose-800",
+  Spicy: "bg-red-100 text-red-800",
+  Sweet: "bg-pink-200 text-pink-900",
+  Keto: "bg-yellow-200 text-yellow-900",
+  Paleo: "bg-amber-100 text-amber-800",
+  Healthy: "bg-teal-100 text-teal-800",
+  Quick: "bg-sky-100 text-sky-800",
+  Italian: "bg-green-200 text-green-900",
+  Asian: "bg-orange-200 text-orange-900",
+  Mexican: "bg-red-200 text-red-900",
+  American: "bg-blue-200 text-blue-900",
+};
+
 type Recipe = {
   id: string;
   title: string;
   content: string;
   rating: number;
+  tags?: string[];
 };
 
 interface RecipesProps {
@@ -19,6 +43,45 @@ interface RecipesProps {
   selectedMood: string | null;
   selectedCookTime: string | null;
 }
+
+const allowedTags = [ 
+  "Breakfast", "Lunch", "Dinner", "Snack",
+  "Vegetarian", "Vegan", "Gluten-Free", "Low-Carb",
+  "High-Protein", "Comfort Food", "Spicy", "Sweet",
+  "Keto", "Paleo", "Healthy", "Quick",
+  "Italian", "Asian", "Mexican", "American"
+];
+
+const generateTags = (text: string): string[] => {
+  const tags: string[] = [];
+  const lower = text.toLowerCase();
+
+  if (lower.includes("breakfast")) tags.push("Breakfast");
+  if (lower.includes("lunch")) tags.push("Lunch");
+  if (lower.includes("dinner")) tags.push("Dinner");
+  if (lower.includes("snack")) tags.push("Snack");
+
+  if (lower.includes("vegetarian")) tags.push("Vegetarian");
+  if (lower.includes("vegan")) tags.push("Vegan");
+  if (lower.includes("gluten-free")) tags.push("Gluten-Free");
+  if (lower.includes("low carb") || lower.includes("low-carb")) tags.push("Low-Carb");
+  if (lower.includes("protein")) tags.push("High-Protein");
+  if (lower.includes("comfort")) tags.push("Comfort Food");
+  if (lower.includes("spicy")) tags.push("Spicy");
+  if (lower.includes("sweet")) tags.push("Sweet");
+
+  if (lower.includes("keto")) tags.push("Keto");
+  if (lower.includes("paleo")) tags.push("Paleo");
+  if (lower.includes("healthy")) tags.push("Healthy");
+  if (lower.includes("quick")) tags.push("Quick");
+
+  if (lower.includes("italian")) tags.push("Italian");
+  if (lower.includes("asian")) tags.push("Asian");
+  if (lower.includes("mexican")) tags.push("Mexican");
+  if (lower.includes("american")) tags.push("American");
+
+  return tags.filter((tag) => allowedTags.includes(tag));
+};
 
 const Recipes: React.FC<RecipesProps> = ({
   geminiSuggestion,
@@ -33,6 +96,8 @@ const Recipes: React.FC<RecipesProps> = ({
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isRating, setIsRating] = useState<boolean>(false);
   const [rating, setRating] = useState<number>(0);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
 
   useEffect(() => {
     if (geminiSuggestion) {
@@ -40,6 +105,20 @@ const Recipes: React.FC<RecipesProps> = ({
       const lines = geminiSuggestion.split("\n");
       let title = "";
       let contentLines = [...lines];
+      let tags: string[] = [];
+
+      const tagLineIndex = contentLines.findIndex(line => line.startsWith("TAGS:"));
+      if (tagLineIndex !== -1) {
+        const tagLine = contentLines[tagLineIndex];
+        tags = tagLine.replace("TAGS:", "")
+          .split(",")
+          .map(tag => tag.trim())
+          .filter(tag => allowedTags.includes(tag)); // Validate
+        contentLines.splice(tagLineIndex, 1);
+      } else {
+        const fullText = contentLines.join(" ").toLowerCase();
+        tags = generateTags(fullText);
+      }
 
       // Look for a title in the first few lines
       for (let i = 0; i < Math.min(3, contentLines.length); i++) {
@@ -72,6 +151,7 @@ const Recipes: React.FC<RecipesProps> = ({
         title,
         content: contentLines.join("\n").trim(), // Join remaining lines for content
         rating: 0,
+        tags,
       });
     }
   }, [geminiSuggestion]);
@@ -101,6 +181,7 @@ const Recipes: React.FC<RecipesProps> = ({
             title: recipe.title,
             content: recipe.content,
             rating: rating,
+            tags: recipe.tags || [],
           }),
         });
         alert("Recipe saved!");
@@ -120,6 +201,18 @@ const Recipes: React.FC<RecipesProps> = ({
     <div className="max-w-7xl mx-auto px-4">
       <div className="border rounded-lg overflow-hidden shadow-lg bg-white p-6">
         <h2 className="text-2xl font-bold mb-4">{recipe.title}</h2>
+        {recipe.tags && recipe.tags.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            {recipe.tags.map((tag) => (
+              <span
+                key={tag}
+                className={`text-xs font-medium px-2 py-1 rounded-full ${tagColorMap[tag] || "bg-gray-200 text-gray-800"}`}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
         <div className="mb-4">
           <MarkdownDisplay content={recipe.content} />
         </div>

@@ -6,6 +6,7 @@ import MarkdownDisplay from "./MarkdownDisplay";
 import ShoppingList from "./ShoppingList";
 
 type Recipe = {
+  ingredients: any;
   id: string;
   title: string;
   content: string;
@@ -76,6 +77,7 @@ const Recipes: React.FC<RecipesProps> = ({
         id: Date.now().toString(),
         title,
         content, // Full content
+        ingredients, // Include the extracted ingredients here
         rating: 0
       });
 
@@ -104,7 +106,8 @@ const Recipes: React.FC<RecipesProps> = ({
             id: recipe.id,
             title: recipe.title,
             content: recipe.content,
-            rating: 0
+            ingredients: recipe.ingredients, // Include the extracted ingredients here
+            rating: 0,
           }),
         });
         setIsRecipeSaved(true); // Mark the recipe as saved

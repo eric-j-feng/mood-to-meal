@@ -19,6 +19,7 @@ interface SavedRecipe {
   id: string;
   title: string;
   content: string;
+  ingredients: string; // Added ingredients property
 }
 
 interface SavedRecipesProps {
@@ -148,7 +149,7 @@ const SavedRecipes: React.FC<SavedRecipesProps> = ({ recipes, setRecipes }) => {
           <div className="flex gap-4 mt-4">
             {/* View Shopping List Button */}
             <button
-              onClick={() => handleViewShoppingList(recipe.content)}
+              onClick={() => handleViewShoppingList(recipe.ingredients)}
               className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
             >
               View Shopping List

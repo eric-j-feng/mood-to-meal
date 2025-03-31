@@ -3,6 +3,7 @@ import { getAuth } from "firebase/auth";
 import { doc, updateDoc, arrayUnion } from "firebase/firestore";
 import { db } from "@/auth/firebase";
 import MarkdownDisplay from "./MarkdownDisplay";
+import ShoppingList from "./ShoppingList";
 
 const tagColorMap: { [key: string]: string } = {
   Breakfast: "bg-yellow-100 text-yellow-800",
@@ -28,6 +29,7 @@ const tagColorMap: { [key: string]: string } = {
 };
 
 type Recipe = {
+  ingredients: any;
   id: string;
   title: string;
   content: string;
@@ -94,10 +96,11 @@ const Recipes: React.FC<RecipesProps> = ({
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [modificationText, setModificationText] = useState<string>("");
   const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [ingredients, setIngredients] = useState<string>('');
+  const [isRecipeSaved, setIsRecipeSaved] = useState<boolean>(false); // New state to track if the recipe is saved
   const [isRating, setIsRating] = useState<boolean>(false);
   const [rating, setRating] = useState<number>(0);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-
 
   useEffect(() => {
     if (geminiSuggestion) {
@@ -105,6 +108,7 @@ const Recipes: React.FC<RecipesProps> = ({
       const lines = geminiSuggestion.split("\n");
       let title = "";
       let contentLines = [...lines];
+      let ingredients = '';
       let tags: string[] = [];
 
       const tagLineIndex = contentLines.findIndex(line => line.startsWith("TAGS:"));
@@ -146,13 +150,27 @@ const Recipes: React.FC<RecipesProps> = ({
         }
       }
 
+      // Extract ingredients between "Ingredients" and "Instructions"
+      const content = contentLines.join('\n').trim();
+      const ingredientsStart = content.toLowerCase().indexOf('ingredients');
+      const instructionsStart = content.toLowerCase().indexOf('instructions');
+      if (ingredientsStart !== -1 && instructionsStart !== -1 && instructionsStart > ingredientsStart) {
+        ingredients = content.substring(ingredientsStart + 'ingredients'.length, instructionsStart).trim();
+      }
+
       setRecipe({
         id: Date.now().toString(),
         title,
+        content, // Full content
+        ingredients, // Include the extracted ingredients here
+        rating: 0
         content: contentLines.join("\n").trim(), // Join remaining lines for content
         rating: 0,
         tags,
       });
+
+      // Store the extracted ingredients in a separate state
+      setIngredients(ingredients);
     }
   }, [geminiSuggestion]);
 
@@ -180,10 +198,13 @@ const Recipes: React.FC<RecipesProps> = ({
             id: recipe.id,
             title: recipe.title,
             content: recipe.content,
+            ingredients: recipe.ingredients, // Include the extracted ingredients here
+            rating: 0,
             rating: rating,
             tags: recipe.tags || [],
           }),
         });
+        setIsRecipeSaved(true); // Mark the recipe as saved
         alert("Recipe saved!");
         setIsRating(false);
       } catch (error) {
@@ -247,31 +268,38 @@ const Recipes: React.FC<RecipesProps> = ({
             </button>
           </div>
         )}
-        {isRating && (
-          <div className="mt-4">
-            <label className="block">
-              <span className="font-semibold">Rate this Recipe:</span>
-              <select
-                value={rating}
-                onChange={(e) => setRating(parseInt(e.target.value))}
-                className="block w-full mt-2 p-2 border rounded"
-              >
-                <option value={0}>Select Rating</option>
-                <option value={1}>1 - Poor</option>
-                <option value={2}>2 - Fair</option>
-                <option value={3}>3 - Good</option>
-                <option value={4}>4 - Very Good</option>
-                <option value={5}>5 - Excellent</option>
-              </select>
-            </label>
-            <button
-              onClick={handleRating}
-              className="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+      {isRecipeSaved && ingredients && (
+        <div className="mt-6">
+          <ShoppingList ingredients={ingredients} />
+        </div>
+      )}
+
+      {isRating && (
+        <div className="mt-4">
+          <label className="block">
+            <span className="font-semibold">Rate this Recipe:</span>
+            <select
+              value={rating}
+              onChange={(e) => setRating(parseInt(e.target.value))}
+              className="block w-full mt-2 p-2 border rounded"
             >
-              Submit Rating
-            </button>
-          </div>
-        )}
+              <option value={0}>Select Rating</option>
+              <option value={1}>1 - Poor</option>
+              <option value={2}>2 - Fair</option>
+              <option value={3}>3 - Good</option>
+              <option value={4}>4 - Very Good</option>
+              <option value={5}>5 - Excellent</option>
+            </select>
+          </label>
+          <button
+            onClick={handleRating}
+            className="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+          >
+            Submit Rating
+          </button>
+        </div>
+      )}
+
       </div>
     </div>
   );

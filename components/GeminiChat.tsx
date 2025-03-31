@@ -209,7 +209,14 @@ Generate a recipe. Do not speak in a conversational tone.`;
 
       {response && (
         <div className="mt-4">
-          <Recipes geminiSuggestion={response} modifyRecipe={modifyRecipe} />
+          <Recipes 
+            geminiSuggestion={response}
+            modifyRecipe={modifyRecipe}
+            selectedCity={null} // Replace with actual value or state
+            selectedState={null} // Replace with actual value or state
+            selectedMood={selectedMood}
+            selectedCookTime={selectedCookTime ?? null}
+          />
         </div>
       )}
     </div>

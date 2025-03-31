@@ -5,6 +5,8 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, updateDoc, arrayRemove } from "firebase/firestore";
 import { db } from "@/auth/firebase";
 import MarkdownDisplay from "./MarkdownDisplay";
+import React from "react";
+import { useRouter } from "next/router";
 
 const tagColorMap: { [key: string]: string } = {
   Breakfast: "bg-yellow-100 text-yellow-800",
@@ -38,10 +40,28 @@ type Recipe = {
 
 };
 
-const allTagOptions = Object.keys(tagColorMap);
+interface SavedRecipe {
+  id: string;
+  title: string;
+  content: string;
+  ingredients: string; // Added ingredients property
+}
 
-const SavedRecipes: React.FC = () => {
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
+interface SavedRecipesProps {
+  recipes: SavedRecipe[];
+  setRecipes: React.Dispatch<React.SetStateAction<SavedRecipe[]>>;
+}
+
+const SavedRecipes: React.FC<SavedRecipesProps> = ({ recipes, setRecipes }) => {
+  const router = useRouter();
+
+  const handleViewShoppingList = (ingredients: string) => {
+    router.push({
+      pathname: "/ShoppingListPage",
+      query: { ingredients },
+    });
+  };
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
@@ -110,44 +130,23 @@ const SavedRecipes: React.FC = () => {
     fetchSavedRecipes();
   }, [userId]);
 
-  const removeRecipe = async (recipe: Recipe) => {
-    if (userId) {
-      const userRef = doc(db, "users", userId);
-      try {
-        await updateDoc(userRef, {
-          savedRecipes: arrayRemove(recipe),
-        });
-        setRecipes((prevRecipes) =>
-          prevRecipes.filter((r) => r.id !== recipe.id)
-        );
-        alert("Recipe removed!");
-      } catch (error) {
-        console.error("Error removing recipe: ", error);
-        alert("Failed to remove recipe.");
+  const removeRecipe = async (recipe: SavedRecipe) => {
+      if (userId) {
+        const userRef = doc(db, "users", userId);
+        try {
+          await updateDoc(userRef, {
+            savedRecipes: arrayRemove({ ...recipe, rating: 0 }),
+          });
+          setRecipes((prevRecipes) =>
+            prevRecipes.filter((r) => r.id !== recipe.id)
+          );
+          alert("Recipe removed!");
+        } catch (error) {
+          console.error("Error removing recipe: ", error);
+          alert("Failed to remove recipe.");
+        }
       }
-    }
-  };
-
-
-  // const updateRating = async (recipeId: string, rating: number) => {
-  //   if (userId) {
-  //     const userRef = doc(db, "users", userId);
-  //     try {
-  //       const updatedRecipes = recipes.map((recipe) =>
-  //         recipe.id === recipeId ? { ...recipe, rating } : recipe
-  //       );
-  //       await updateDoc(userRef, {
-  //         savedRecipes: updatedRecipes,
-  //       });
-  //       setRecipes(updatedRecipes);
-  //       setEditingRecipeId(null);
-  //     } catch (error) {
-  //       console.error("Error updating rating: ", error);
-  //       alert("Failed to update rating.");
-  //     }
-  //   }
-  // };
-
+    };
 
   const updateRating = async (recipeId: string) => {
     if (userId && newRating !== null) {
@@ -166,7 +165,6 @@ const SavedRecipes: React.FC = () => {
 
           const sortedRecipes = (updatedRecipes || []).sort((a: Recipe, b: Recipe) => b.rating - a.rating);
 
-
           setRecipes(sortedRecipes);
           setEditingRecipeId(null);
           setNewRating(null);
@@ -178,6 +176,9 @@ const SavedRecipes: React.FC = () => {
     }
   };
 
+  const addRecipe = (newRecipe: any) => {
+    setRecipes((prevRecipes) => [...prevRecipes, newRecipe]);
+  };
   const filteredRecipes = recipes.filter((recipe) => {
     if (selectedTags.length === 0) return true;
     return selectedTags.every((tag) => recipe.tags?.includes(tag));
@@ -347,6 +348,12 @@ const SavedRecipes: React.FC = () => {
       )}
     </div>
   );
+};
+
+const ParentComponent: React.FC = () => {
+  const [recipes, setRecipes] = useState<any[]>([]);
+
+  return <SavedRecipes recipes={recipes} setRecipes={setRecipes} />;
 };
 
 export default SavedRecipes;

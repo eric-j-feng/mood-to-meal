@@ -120,6 +120,12 @@ If the weather is hot/sunny, generate light, refreshing, or hydrating dishes.
 If some criteria are not specified, ignore them.
 Combine mood and weather for a well-balanced suggestion.
 Using the user's past ratings, make one that they will like.
+After generating the recipe, assign tags from the following allowed list ONLY. Do not create new tags.
+Allowed Tags:
+Breakfast, Lunch, Dinner, Snack, Vegetarian, Vegan, Gluten-Free, Low-Carb, High-Protein, Comfort Food, Spicy, Sweet, Keto, Paleo, Healthy, Quick, Italian, Asian, Mexican, American
+
+Choose tags that best describe the recipe based on its content (e.g. meal type, cuisine, dietary style). Provide them at the end of the recipe in this format:
+**Tags:** Tag1, Tag2, Tag3
 
 Generate a recipe. Do not speak in a conversational tone.`;
   };

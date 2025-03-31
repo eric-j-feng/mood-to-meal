@@ -76,6 +76,10 @@ const SavedRecipes: React.FC = () => {
           if (userDoc.exists()) {
             const userData = userDoc.data();
             const processedRecipes = (userData.savedRecipes || []).map((recipe: Recipe) => {
+              if (!recipe.content) {
+                return { ...recipe, tags: [] };
+              }
+              
               if (!recipe.tags || recipe.tags.length === 0) {
                 const lower = recipe.content.toLowerCase();
                 const inferredTags: string[] = [];
@@ -90,8 +94,8 @@ const SavedRecipes: React.FC = () => {
               }
               return recipe;
             });
-            const sortedRecipes = (userData.savedRecipes || []).sort((a: Recipe, b: Recipe) => b.rating - a.rating);
-            setRecipes(sortedRecipes || []);
+            const sortedRecipes = processedRecipes.sort((a: Recipe, b: Recipe) => b.rating - a.rating);
+            setRecipes(sortedRecipes);
           } else {
             setRecipes([]);
           }
@@ -190,30 +194,32 @@ const SavedRecipes: React.FC = () => {
       >
         {filterVisible ? "Hide Filters" : "Filter Recipes"}
       </button>
+
       {filterVisible && (
-      <div className="mb-6 bg-gray-100 p-4 rounded shadow">
-        <div className="flex flex-wrap gap-4">
-          {allTagOptions.map((tag) => (
-            <label key={tag} className="inline-flex items-center">
-              <input
-                type="checkbox"
-                checked={selectedTags.includes(tag)}
-                onChange={() => {
-                  setSelectedTags((prev) =>
-                    prev.includes(tag)
-                      ? prev.filter((t) => t !== tag)
-                      : [...prev, tag]
-                  );
-                }}
-                className="mr-2"
-              />
-              {tag}
-            </label>
-          ))}
+        <div className="mb-6 bg-gray-100 p-4 rounded shadow">
+          <div className="flex flex-wrap gap-4">
+            {allTagOptions.map((tag) => (
+              <label key={tag} className="inline-flex items-center">
+                <input
+                  type="checkbox"
+                  checked={selectedTags.includes(tag)}
+                  onChange={() => {
+                    setSelectedTags((prev) =>
+                      prev.includes(tag)
+                        ? prev.filter((t) => t !== tag)
+                        : [...prev, tag]
+                    );
+                  }}
+                  className="mr-2"
+                />
+                {tag}
+              </label>
+            ))}
+          </div>
         </div>
-      </div>
-    )}
-    {filteredRecipes.length === 0 ? (
+      )}
+
+      {filteredRecipes.length === 0 ? (
         <div className="text-center text-gray-500 mt-6">No saved recipes found</div>
       ) : (
         <div className="grid grid-cols-1 gap-6">
@@ -222,133 +228,123 @@ const SavedRecipes: React.FC = () => {
               key={recipe.id}
               className="border rounded-lg overflow-hidden shadow-lg bg-white"
             >
-              {/* ...recipe card content... */}
-            </div>
-          ))}
-        </div>
-      )}
-      <div className="grid grid-cols-1 gap-6">
-        {filteredRecipes.map((recipe) => (
-          <div
-            key={recipe.id}
-            className="border rounded-lg overflow-hidden shadow-lg bg-white"
-          >
-            <div className="p-4">
-              <h3 className="font-bold text-xl mb-2">{recipe.title}</h3>
+              <div className="p-4">
+                <h3 className="font-bold text-xl mb-2">{recipe.title}</h3>
 
-              {recipe.tags && recipe.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-3">
-                    {recipe.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className={`text-xs font-medium px-2 py-1 rounded-full ${tagColorMap[tag] || "bg-gray-200 text-gray-700"}`}
-                      >
-                        {tag}
-                      </span>
-                    ))}
+                {recipe.tags && recipe.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {recipe.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className={`text-xs font-medium px-2 py-1 rounded-full ${tagColorMap[tag] || "bg-gray-200 text-gray-700"}`}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                {/* Toggle Content Button */}
+                <button
+                  onClick={() =>
+                    setExpandedRecipe(
+                      expandedRecipe === recipe.id ? null : recipe.id
+                    )
+                  }
+                  className="mb-2 text-blue-600 hover:text-blue-800"
+                >
+                  {expandedRecipe === recipe.id ? "Hide Details" : "Show Details"}
+                </button>
+
+                {/* Recipe Content */}
+                {expandedRecipe === recipe.id && (
+                  <div className="mt-4 mb-4">
+                    <MarkdownDisplay content={recipe.content} />
                   </div>
                 )}
 
-              {/* Toggle Content Button */}
-              <button
-                onClick={() =>
-                  setExpandedRecipe(
-                    expandedRecipe === recipe.id ? null : recipe.id
-                  )
-                }
-                className="mb-2 text-blue-600 hover:text-blue-800"
-              >
-                {expandedRecipe === recipe.id ? "Hide Details" : "Show Details"}
-              </button>
+                {/* Recipe Rating */}
 
-              {/* Recipe Content */}
-              {expandedRecipe === recipe.id && (
-                <div className="mt-4 mb-4">
-                  <MarkdownDisplay content={recipe.content} />
+
+                <div>
+                  {recipe.rating === 0 ? "Current Rating: Not Set" : `Current Rating: ${recipe.rating}/5`}
+                  <br/>
+                  {editingRecipeId === recipe.id ? (
+                    <>
+                      <select
+                        value={newRating ?? recipe.rating}
+                        onChange={(e) => setNewRating(Number(e.target.value))}
+                        className="mt-2 px-2 py-1 border rounded"
+                      >
+                        {[0, 1, 2, 3, 4, 5].map((num) => (
+                          <option key={num} value={num}>{num}</option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={() => updateRating(recipe.id)}
+                        className="ml-2 px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                      >
+                        Save
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => setEditingRecipeId(recipe.id)}
+                      className="mt-2 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                    >
+                      Edit Rating
+                    </button>
+                  )}
                 </div>
-              )}
-
-              {/* Recipe Rating */}
-
-
-              <div>
-                {recipe.rating === 0 ? "Current Rating: Not Set" : `Current Rating: ${recipe.rating}/5`}
-                <br/>
-                {editingRecipeId === recipe.id ? (
-                  <>
+                {/* <div>
+                  {recipe.rating === 0 ? "Current Rating: Not Set" : `Current Rating: ${recipe.rating}/5`}
+                  <br/>
+                  {editingRecipeId === recipe.id ? (
                     <select
                       value={newRating ?? recipe.rating}
                       onChange={(e) => setNewRating(Number(e.target.value))}
+                      onBlur={() => {
+                        if (newRating !== null) updateRating(recipe.id, newRating);
+                      }}
                       className="mt-2 px-2 py-1 border rounded"
                     >
                       {[0, 1, 2, 3, 4, 5].map((num) => (
                         <option key={num} value={num}>{num}</option>
                       ))}
                     </select>
+                  ) : (
                     <button
-                      onClick={() => updateRating(recipe.id)}
-                      className="ml-2 px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                      onClick={() => setEditingRecipeId(recipe.id)}
+                      className="mt-2 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
                     >
-                      Save
+                      Edit Rating
                     </button>
-                  </>
-                ) : (
-                  <button
-                    onClick={() => setEditingRecipeId(recipe.id)}
-                    className="mt-2 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-                  >
-                    Edit Rating
-                  </button>
-                )}
-              </div>
-              {/* <div>
-                {recipe.rating === 0 ? "Current Rating: Not Set" : `Current Rating: ${recipe.rating}/5`}
-                <br/>
-                {editingRecipeId === recipe.id ? (
-                  <select
-                    value={newRating ?? recipe.rating}
-                    onChange={(e) => setNewRating(Number(e.target.value))}
-                    onBlur={() => {
-                      if (newRating !== null) updateRating(recipe.id, newRating);
-                    }}
-                    className="mt-2 px-2 py-1 border rounded"
-                  >
-                    {[0, 1, 2, 3, 4, 5].map((num) => (
-                      <option key={num} value={num}>{num}</option>
-                    ))}
-                  </select>
-                ) : (
-                  <button
-                    onClick={() => setEditingRecipeId(recipe.id)}
-                    className="mt-2 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-                  >
-                    Edit Rating
-                  </button>
-                )}
-              </div> */}
+                  )}
+                </div> */}
 
-              {/* <div>
-                {recipe.rating === 0 ? "Current Rating: Not Set" : recipe.rating}
-                <br/>
+                {/* <div>
+                  {recipe.rating === 0 ? "Current Rating: Not Set" : recipe.rating}
+                  <br/>
+                  <button
+                    onClick={() => setEditingRecipeId(recipe.id)}
+                    className="mt-2 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                  >
+                    Edit Rating
+                  </button>
+                </div> */}
+
+                {/* Remove Recipe Button */}
                 <button
-                  onClick={() => setEditingRecipeId(recipe.id)}
-                  className="mt-2 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                  onClick={() => removeRecipe(recipe)}
+                  className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
                 >
-                  Edit Rating
+                  Remove
                 </button>
-              </div> */}
-
-              {/* Remove Recipe Button */}
-              <button
-                onClick={() => removeRecipe(recipe)}
-                className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-              >
-                Remove
-              </button>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

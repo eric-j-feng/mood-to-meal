@@ -34,10 +34,12 @@ const ShoppingListPage: React.FC = () => {
             (r: any) => r.id === recipeId
           );
 
+          console.log(recipe);
+
           if (!recipe) {
             setError("Recipe not found.");
           } else if (!recipe.cleanedIngredients) {
-            setError("No shopping available for this recipe.");
+            setError("No shopping list available for this recipe.");
           } else {
             setShoppingList(recipe.cleanedIngredients.split("\n"));
           }

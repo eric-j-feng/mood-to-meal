@@ -207,6 +207,9 @@ const Recipes: React.FC<RecipesProps> = ({
     const user = auth.currentUser;
 
     if (user && recipe) {
+      // Ensure cleanedIngredients is properly set before saving
+      const cleanedIngredients = recipe.cleanedIngredients || cleanIngredients(recipe.ingredients);
+
       const userRef = doc(db, "users", user.uid);
       try {
         await updateDoc(userRef, {
@@ -217,7 +220,7 @@ const Recipes: React.FC<RecipesProps> = ({
             ingredients: recipe.ingredients, // Include the extracted ingredients here
             rating: rating, // Use the rating variable
             tags: recipe.tags || [],
-            cleanedIngredients: recipe.cleanedIngredients, // Cleaned ingredients
+            cleanedIngredients: cleanedIngredients, // Ensure cleanedIngredients is included
           }),
         });
         setIsRecipeSaved(true); // Mark the recipe as saved

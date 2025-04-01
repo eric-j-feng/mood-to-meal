@@ -173,11 +173,14 @@ const Recipes: React.FC<RecipesProps> = ({
           .trim();
       }
 
+      const cleanedIngredients = cleanIngredients(ingredients); // Clean the ingredients here
+
       setRecipe({
         id: Date.now().toString(),
         title,
         content: contentLines.join("\n").trim(), // Use this value for content
         ingredients, // Include the extracted ingredients here
+        cleanedIngredients, // Add cleanedIngredients to the Recipe object
         rating: 0,
         tags,
       });
@@ -231,8 +234,7 @@ const Recipes: React.FC<RecipesProps> = ({
 
   if (!recipe) return null;
 
-  const cleanedIngredients = cleanIngredients(ingredients);
-
+  
   return (
     <div className="max-w-7xl mx-auto px-4">
       <div className="border rounded-lg overflow-hidden shadow-lg bg-white p-6">
@@ -312,9 +314,9 @@ const Recipes: React.FC<RecipesProps> = ({
 
       <div className="mt-6">
         <h2>Shopping List</h2>
-        {isRecipeSaved && cleanedIngredients ? (
+        {isRecipeSaved && recipe.cleanedIngredients ? (
             <ul>
-                {cleanedIngredients.split('\n').map((item, index) => (
+                {recipe.cleanedIngredients.split('\n').map((item, index) => (
                     <li key={index}>
                         <input type="checkbox" /> {item}
                     </li>

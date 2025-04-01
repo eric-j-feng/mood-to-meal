@@ -290,7 +290,7 @@ const Main = () => {
       className={`bg-[url('/assets/texture.jpg')] flex flex-col items-center min-h-screen p-8 ${myFont.className}`}
     >
       {showOnboarding ? (
-        <Onboarding onComplete={handleOnboardingComplete} />
+        <Onboarding onComplete={() => handleOnboardingComplete({ dietaryRestrictions: [], cookingSkill: "" })} />
       ) : (
         <>
 

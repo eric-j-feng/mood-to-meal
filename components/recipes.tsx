@@ -3,7 +3,6 @@ import { getAuth } from "firebase/auth";
 import { doc, updateDoc, arrayUnion } from "firebase/firestore";
 import { db } from "@/auth/firebase";
 import MarkdownDisplay from "./MarkdownDisplay";
-import ShoppingList from "./ShoppingList";
 
 const tagColorMap: { [key: string]: string } = {
   Breakfast: "bg-yellow-100 text-yellow-800",
@@ -35,6 +34,7 @@ type Recipe = {
   content: string;
   rating: number;
   tags?: string[];
+  cleanedIngredients?: string;
 };
 
 interface RecipesProps {
@@ -83,6 +83,16 @@ const generateTags = (text: string): string[] => {
   if (lower.includes("american")) tags.push("American");
 
   return tags.filter((tag) => allowedTags.includes(tag));
+};
+
+// Function to clean up the ingredients list
+const cleanIngredients = (ingredients: string) => {
+  return ingredients
+    .split('\n') // Split the string into lines
+    .map(line => line.trim()) // Trim whitespace from each line
+    .filter(line => line && line !== '**' && line !== ':**') // Remove empty lines and unwanted markers
+    .map(line => line.replace(/^\*\s*/, '')) // Remove leading '* ' from each line
+    .join('\n'); // Join the cleaned lines back into a string
 };
 
 const Recipes: React.FC<RecipesProps> = ({
@@ -155,7 +165,12 @@ const Recipes: React.FC<RecipesProps> = ({
       const ingredientsStart = content.toLowerCase().indexOf('ingredients');
       const instructionsStart = content.toLowerCase().indexOf('instructions');
       if (ingredientsStart !== -1 && instructionsStart !== -1 && instructionsStart > ingredientsStart) {
-        ingredients = content.substring(ingredientsStart + 'ingredients'.length, instructionsStart).trim();
+        ingredients = content
+          .substring(ingredientsStart + 'ingredients'.length, instructionsStart)
+          .split('\n')
+          .filter(line => !line.toLowerCase().startsWith('equipment')) // Exclude "Equipment" lines
+          .join('\n')
+          .trim();
       }
 
       setRecipe({
@@ -199,6 +214,7 @@ const Recipes: React.FC<RecipesProps> = ({
             ingredients: recipe.ingredients, // Include the extracted ingredients here
             rating: rating, // Use the rating variable
             tags: recipe.tags || [],
+            cleanedIngredients: recipe.cleanedIngredients, // Cleaned ingredients
           }),
         });
         setIsRecipeSaved(true); // Mark the recipe as saved
@@ -214,6 +230,8 @@ const Recipes: React.FC<RecipesProps> = ({
   };
 
   if (!recipe) return null;
+
+  const cleanedIngredients = cleanIngredients(ingredients);
 
   return (
     <div className="max-w-7xl mx-auto px-4">
@@ -265,11 +283,6 @@ const Recipes: React.FC<RecipesProps> = ({
             </button>
           </div>
         )}
-      {isRecipeSaved && ingredients && (
-        <div className="mt-6">
-          <ShoppingList ingredients={ingredients} />
-        </div>
-      )}
 
       {isRating && (
         <div className="mt-4">
@@ -296,6 +309,21 @@ const Recipes: React.FC<RecipesProps> = ({
           </button>
         </div>
       )}
+
+      <div className="mt-6">
+        <h2>Shopping List</h2>
+        {isRecipeSaved && cleanedIngredients ? (
+            <ul>
+                {cleanedIngredients.split('\n').map((item, index) => (
+                    <li key={index}>
+                        <input type="checkbox" /> {item}
+                    </li>
+                ))}
+            </ul>
+        ) : (
+            <p>Save the recipe to view the shopping list.</p> // Message if the recipe is not saved
+        )}
+      </div>
 
       </div>
     </div>

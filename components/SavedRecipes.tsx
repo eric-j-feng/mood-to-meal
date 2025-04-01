@@ -32,7 +32,11 @@ const tagColorMap: { [key: string]: string } = {
 };
 
 // Define allTagOptions as a static array of strings
-const allTagOptions = ['Breakfast', 'Lunch', 'Dinner', 'Dessert', 'Vegan', 'Gluten-Free'];
+const allTagOptions = ["Breakfast", "Lunch", "Dinner", "Snack",
+  "Vegetarian", "Vegan", "Gluten-Free", "Low-Carb",
+  "High-Protein", "Comfort Food", "Spicy", "Sweet",
+  "Keto", "Paleo", "Healthy", "Quick",
+  "Italian", "Asian", "Mexican", "American"];
 
 type Recipe = {
   id: string;
@@ -40,6 +44,7 @@ type Recipe = {
   content: string;
   rating: number;
   tags?: string[];
+  cleanedIngredients?: string;
 };
 
 export interface SavedRecipe {
@@ -49,6 +54,7 @@ export interface SavedRecipe {
   content: string; // Added content property
   tags: string[]; // Assuming tags is an array of strings
   rating: number; // Added rating property
+  cleanedIngredients?: string;
 }
 
 interface SavedRecipesProps {
@@ -59,13 +65,6 @@ interface SavedRecipesProps {
 const SavedRecipes: React.FC<SavedRecipesProps> = ({ recipes, setRecipes }) => {
   const router = useRouter();
 
-  const handleViewShoppingList = (ingredients: string) => {
-    router.push({
-      pathname: "/ShoppingListPage",
-      query: { ingredients },
-    });
-  };
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
@@ -74,6 +73,28 @@ const SavedRecipes: React.FC<SavedRecipesProps> = ({ recipes, setRecipes }) => {
   const [editingRecipeId, setEditingRecipeId] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [filterVisible, setFilterVisible] = useState(false);
+
+  const cleanIngredients = (content: string) => {
+    const ingredientsStart = content.toLowerCase().indexOf("ingredients");
+    const instructionsStart = content.toLowerCase().indexOf("instructions");
+    if (ingredientsStart !== -1 && instructionsStart !== -1 && instructionsStart > ingredientsStart) {
+      return content
+        .substring(ingredientsStart + "ingredients".length, instructionsStart) // Extract text after "Ingredients"
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(
+          (line) =>
+            line && // Exclude empty lines
+            line.toLowerCase() !== "ingredients" && // Exclude "Ingredients" header
+            line !== "**" && // Exclude unwanted markers
+            line !== ":**" &&
+            !line.toLowerCase().startsWith("equipment") // Exclude "Equipment" lines
+        )
+        .map((line) => line.replace(/^\*\s*/, "")) // Remove leading "* " from each line
+        .join("\n");
+    }
+    return "";
+  };
 
   useEffect(() => {
     const auth = getAuth();
@@ -100,8 +121,10 @@ const SavedRecipes: React.FC<SavedRecipesProps> = ({ recipes, setRecipes }) => {
             const userData = userDoc.data();
             const processedRecipes = (userData.savedRecipes || []).map((recipe: Recipe) => {
               if (!recipe.content) {
-                return { ...recipe, tags: [] };
+                return { ...recipe, tags: [], cleanedIngredients: "" };
               }
+
+              const cleanedIngredients = cleanIngredients(recipe.content);
 
               if (!recipe.tags || recipe.tags.length === 0) {
                 const lower = recipe.content.toLowerCase();
@@ -113,9 +136,9 @@ const SavedRecipes: React.FC<SavedRecipesProps> = ({ recipes, setRecipes }) => {
                 if (lower.includes("vegetarian")) inferredTags.push("Vegetarian");
                 if (lower.includes("vegan")) inferredTags.push("Vegan");
                 if (lower.includes("gluten-free")) inferredTags.push("Gluten-Free");
-                return { ...recipe, tags: inferredTags };
+                return { ...recipe, tags: inferredTags, cleanedIngredients };
               }
-              return recipe;
+              return { ...recipe, cleanedIngredients };
             });
             const sortedRecipes = processedRecipes.sort((a: Recipe, b: Recipe) => b.rating - a.rating);
             setRecipes(sortedRecipes);
@@ -301,7 +324,16 @@ const SavedRecipes: React.FC<SavedRecipesProps> = ({ recipes, setRecipes }) => {
                   )}
                 </div>
 
+                {/* View Shopping List Button */}
+                <button
+                  onClick={() => router.push(`/ShoppingListPage?recipeId=${recipe.id}`)}
+                  className="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                >
+                  View Shopping List
+                </button>
+
                 {/* Remove Recipe Button */}
+                <> </>
                 <button
                   onClick={() => removeRecipe(recipe)}
                   className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"

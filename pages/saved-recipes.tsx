@@ -11,7 +11,10 @@ const SavedRecipesPage = () => {
           Here are all the recipes you have saved.
         </p>
       </header>
-      <SavedRecipes />
+      <SavedRecipes 
+        recipes={[]} 
+        setRecipes={() => {}} 
+      />
     </main>
   );
 };

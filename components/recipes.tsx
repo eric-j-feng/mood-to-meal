@@ -161,10 +161,9 @@ const Recipes: React.FC<RecipesProps> = ({
       setRecipe({
         id: Date.now().toString(),
         title,
-        content, // Full content
+        content: contentLines.join("\n").trim(), // Use this value for content
         ingredients, // Include the extracted ingredients here
         rating: 0,
-        content: contentLines.join("\n").trim(), // Join remaining lines for content
         tags,
       });
 
@@ -198,8 +197,7 @@ const Recipes: React.FC<RecipesProps> = ({
             title: recipe.title,
             content: recipe.content,
             ingredients: recipe.ingredients, // Include the extracted ingredients here
-            rating: 0,
-            rating: rating,
+            rating: rating, // Use the rating variable
             tags: recipe.tags || [],
           }),
         });
@@ -223,7 +221,7 @@ const Recipes: React.FC<RecipesProps> = ({
         <h2 className="text-2xl font-bold mb-4">{recipe.title}</h2>
         {recipe.tags && recipe.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
-            {recipe.tags.map((tag) => (
+            {recipe.tags.map((tag: string) => (
               <span
                 key={tag}
                 className={`text-xs font-medium px-2 py-1 rounded-full ${tagColorMap[tag] || "bg-gray-200 text-gray-800"}`}

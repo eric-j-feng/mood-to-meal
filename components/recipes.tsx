@@ -3,7 +3,6 @@ import { getAuth } from "firebase/auth";
 import { doc, updateDoc, arrayUnion } from "firebase/firestore";
 import { db } from "@/auth/firebase";
 import MarkdownDisplay from "./MarkdownDisplay";
-import ShoppingList from "./ShoppingList";
 
 const tagColorMap: { [key: string]: string } = {
   Breakfast: "bg-yellow-100 text-yellow-800",
@@ -35,6 +34,7 @@ type Recipe = {
   content: string;
   rating: number;
   tags?: string[];
+  cleanedIngredients?: string;
 };
 
 interface RecipesProps {
@@ -83,6 +83,16 @@ const generateTags = (text: string): string[] => {
   if (lower.includes("american")) tags.push("American");
 
   return tags.filter((tag) => allowedTags.includes(tag));
+};
+
+// Function to clean up the ingredients list
+const cleanIngredients = (ingredients: string) => {
+  return ingredients
+    .split('\n') // Split the string into lines
+    .map(line => line.trim()) // Trim whitespace from each line
+    .filter(line => line && line !== '**' && line !== ':**') // Remove empty lines and unwanted markers
+    .map(line => line.replace(/^\*\s*/, '')) // Remove leading '* ' from each line
+    .join('\n'); // Join the cleaned lines back into a string
 };
 
 const Recipes: React.FC<RecipesProps> = ({
@@ -155,16 +165,23 @@ const Recipes: React.FC<RecipesProps> = ({
       const ingredientsStart = content.toLowerCase().indexOf('ingredients');
       const instructionsStart = content.toLowerCase().indexOf('instructions');
       if (ingredientsStart !== -1 && instructionsStart !== -1 && instructionsStart > ingredientsStart) {
-        ingredients = content.substring(ingredientsStart + 'ingredients'.length, instructionsStart).trim();
+        ingredients = content
+          .substring(ingredientsStart + 'ingredients'.length, instructionsStart)
+          .split('\n')
+          .filter(line => !line.toLowerCase().startsWith('equipment')) // Exclude "Equipment" lines
+          .join('\n')
+          .trim();
       }
+
+      const cleanedIngredients = cleanIngredients(ingredients); // Clean the ingredients here
 
       setRecipe({
         id: Date.now().toString(),
         title,
-        content, // Full content
+        content: contentLines.join("\n").trim(), // Use this value for content
         ingredients, // Include the extracted ingredients here
+        cleanedIngredients, // Add cleanedIngredients to the Recipe object
         rating: 0,
-        content: contentLines.join("\n").trim(), // Join remaining lines for content
         tags,
       });
 
@@ -190,6 +207,9 @@ const Recipes: React.FC<RecipesProps> = ({
     const user = auth.currentUser;
 
     if (user && recipe) {
+      // Ensure cleanedIngredients is properly set before saving
+      const cleanedIngredients = recipe.cleanedIngredients || cleanIngredients(recipe.ingredients);
+
       const userRef = doc(db, "users", user.uid);
       try {
         await updateDoc(userRef, {
@@ -198,9 +218,9 @@ const Recipes: React.FC<RecipesProps> = ({
             title: recipe.title,
             content: recipe.content,
             ingredients: recipe.ingredients, // Include the extracted ingredients here
-            rating: 0,
-            rating: rating,
+            rating: rating, // Use the rating variable
             tags: recipe.tags || [],
+            cleanedIngredients: cleanedIngredients, // Ensure cleanedIngredients is included
           }),
         });
         setIsRecipeSaved(true); // Mark the recipe as saved
@@ -217,13 +237,14 @@ const Recipes: React.FC<RecipesProps> = ({
 
   if (!recipe) return null;
 
+  
   return (
     <div className="max-w-7xl mx-auto px-4">
       <div className="border rounded-lg overflow-hidden shadow-lg bg-white p-6">
         <h2 className="text-2xl font-bold mb-4">{recipe.title}</h2>
         {recipe.tags && recipe.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
-            {recipe.tags.map((tag) => (
+            {recipe.tags.map((tag: string) => (
               <span
                 key={tag}
                 className={`text-xs font-medium px-2 py-1 rounded-full ${tagColorMap[tag] || "bg-gray-200 text-gray-800"}`}
@@ -267,11 +288,6 @@ const Recipes: React.FC<RecipesProps> = ({
             </button>
           </div>
         )}
-      {isRecipeSaved && ingredients && (
-        <div className="mt-6">
-          <ShoppingList ingredients={ingredients} />
-        </div>
-      )}
 
       {isRating && (
         <div className="mt-4">
@@ -298,6 +314,21 @@ const Recipes: React.FC<RecipesProps> = ({
           </button>
         </div>
       )}
+
+      <div className="mt-6">
+        <h2>Shopping List</h2>
+        {isRecipeSaved && recipe.cleanedIngredients ? (
+            <ul>
+                {recipe.cleanedIngredients.split('\n').map((item, index) => (
+                    <li key={index}>
+                        <input type="checkbox" /> {item}
+                    </li>
+                ))}
+            </ul>
+        ) : (
+            <p>Save the recipe to view the shopping list.</p> // Message if the recipe is not saved
+        )}
+      </div>
 
       </div>
     </div>

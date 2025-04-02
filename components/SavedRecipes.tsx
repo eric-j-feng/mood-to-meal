@@ -31,20 +31,30 @@ const tagColorMap: { [key: string]: string } = {
   American: "bg-blue-200 text-blue-900",
 };
 
+// Define allTagOptions as a static array of strings
+const allTagOptions = ["Breakfast", "Lunch", "Dinner", "Snack",
+  "Vegetarian", "Vegan", "Gluten-Free", "Low-Carb",
+  "High-Protein", "Comfort Food", "Spicy", "Sweet",
+  "Keto", "Paleo", "Healthy", "Quick",
+  "Italian", "Asian", "Mexican", "American"];
+
 type Recipe = {
   id: string;
   title: string;
   content: string;
   rating: number;
   tags?: string[];
-
+  cleanedIngredients?: string;
 };
 
-interface SavedRecipe {
+export interface SavedRecipe {
   id: string;
   title: string;
-  content: string;
-  ingredients: string; // Added ingredients property
+  description: string;
+  content: string; // Added content property
+  tags: string[]; // Assuming tags is an array of strings
+  rating: number; // Added rating property
+  cleanedIngredients?: string;
 }
 
 interface SavedRecipesProps {
@@ -55,13 +65,6 @@ interface SavedRecipesProps {
 const SavedRecipes: React.FC<SavedRecipesProps> = ({ recipes, setRecipes }) => {
   const router = useRouter();
 
-  const handleViewShoppingList = (ingredients: string) => {
-    router.push({
-      pathname: "/ShoppingListPage",
-      query: { ingredients },
-    });
-  };
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
@@ -71,6 +74,27 @@ const SavedRecipes: React.FC<SavedRecipesProps> = ({ recipes, setRecipes }) => {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [filterVisible, setFilterVisible] = useState(false);
 
+  const cleanIngredients = (content: string) => {
+    const ingredientsStart = content.toLowerCase().indexOf("ingredients");
+    const instructionsStart = content.toLowerCase().indexOf("instructions");
+    if (ingredientsStart !== -1 && instructionsStart !== -1 && instructionsStart > ingredientsStart) {
+      return content
+        .substring(ingredientsStart + "ingredients".length, instructionsStart) // Extract text after "Ingredients"
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(
+          (line) =>
+            line && // Exclude empty lines
+            line.toLowerCase() !== "ingredients" && // Exclude "Ingredients" header
+            line !== "**" && // Exclude unwanted markers
+            line !== ":**" &&
+            !line.toLowerCase().startsWith("equipment") // Exclude "Equipment" lines
+        )
+        .map((line) => line.replace(/^\*\s*/, "")) // Remove leading "* " from each line
+        .join("\n");
+    }
+    return "";
+  };
 
   useEffect(() => {
     const auth = getAuth();
@@ -97,9 +121,11 @@ const SavedRecipes: React.FC<SavedRecipesProps> = ({ recipes, setRecipes }) => {
             const userData = userDoc.data();
             const processedRecipes = (userData.savedRecipes || []).map((recipe: Recipe) => {
               if (!recipe.content) {
-                return { ...recipe, tags: [] };
+                return { ...recipe, tags: [], cleanedIngredients: "" };
               }
-              
+
+              const cleanedIngredients = cleanIngredients(recipe.content);
+
               if (!recipe.tags || recipe.tags.length === 0) {
                 const lower = recipe.content.toLowerCase();
                 const inferredTags: string[] = [];
@@ -110,9 +136,9 @@ const SavedRecipes: React.FC<SavedRecipesProps> = ({ recipes, setRecipes }) => {
                 if (lower.includes("vegetarian")) inferredTags.push("Vegetarian");
                 if (lower.includes("vegan")) inferredTags.push("Vegan");
                 if (lower.includes("gluten-free")) inferredTags.push("Gluten-Free");
-                return { ...recipe, tags: inferredTags };
+                return { ...recipe, tags: inferredTags, cleanedIngredients };
               }
-              return recipe;
+              return { ...recipe, cleanedIngredients };
             });
             const sortedRecipes = processedRecipes.sort((a: Recipe, b: Recipe) => b.rating - a.rating);
             setRecipes(sortedRecipes);
@@ -131,22 +157,22 @@ const SavedRecipes: React.FC<SavedRecipesProps> = ({ recipes, setRecipes }) => {
   }, [userId]);
 
   const removeRecipe = async (recipe: SavedRecipe) => {
-      if (userId) {
-        const userRef = doc(db, "users", userId);
-        try {
-          await updateDoc(userRef, {
-            savedRecipes: arrayRemove({ ...recipe, rating: 0 }),
-          });
-          setRecipes((prevRecipes) =>
-            prevRecipes.filter((r) => r.id !== recipe.id)
-          );
-          alert("Recipe removed!");
-        } catch (error) {
-          console.error("Error removing recipe: ", error);
-          alert("Failed to remove recipe.");
-        }
+    if (userId) {
+      const userRef = doc(db, "users", userId);
+      try {
+        await updateDoc(userRef, {
+          savedRecipes: arrayRemove({ ...recipe, rating: 0 }),
+        });
+        setRecipes((prevRecipes) =>
+          prevRecipes.filter((r) => r.id !== recipe.id)
+        );
+        alert("Recipe removed!");
+      } catch (error) {
+        console.error("Error removing recipe: ", error);
+        alert("Failed to remove recipe.");
       }
-    };
+    }
+  };
 
   const updateRating = async (recipeId: string) => {
     if (userId && newRating !== null) {
@@ -199,7 +225,7 @@ const SavedRecipes: React.FC<SavedRecipesProps> = ({ recipes, setRecipes }) => {
       {filterVisible && (
         <div className="mb-6 bg-gray-100 p-4 rounded shadow">
           <div className="flex flex-wrap gap-4">
-            {allTagOptions.map((tag) => (
+            {allTagOptions.map((tag: string) => (
               <label key={tag} className="inline-flex items-center">
                 <input
                   type="checkbox"
@@ -233,17 +259,17 @@ const SavedRecipes: React.FC<SavedRecipesProps> = ({ recipes, setRecipes }) => {
                 <h3 className="font-bold text-xl mb-2">{recipe.title}</h3>
 
                 {recipe.tags && recipe.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {recipe.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className={`text-xs font-medium px-2 py-1 rounded-full ${tagColorMap[tag] || "bg-gray-200 text-gray-700"}`}
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {recipe.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className={`text-xs font-medium px-2 py-1 rounded-full ${tagColorMap[tag] || "bg-gray-200 text-gray-700"}`}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
 
                 {/* Toggle Content Button */}
                 <button
@@ -265,11 +291,9 @@ const SavedRecipes: React.FC<SavedRecipesProps> = ({ recipes, setRecipes }) => {
                 )}
 
                 {/* Recipe Rating */}
-
-
                 <div>
                   {recipe.rating === 0 ? "Current Rating: Not Set" : `Current Rating: ${recipe.rating}/5`}
-                  <br/>
+                  <br />
                   {editingRecipeId === recipe.id ? (
                     <>
                       <select
@@ -278,7 +302,9 @@ const SavedRecipes: React.FC<SavedRecipesProps> = ({ recipes, setRecipes }) => {
                         className="mt-2 px-2 py-1 border rounded"
                       >
                         {[0, 1, 2, 3, 4, 5].map((num) => (
-                          <option key={num} value={num}>{num}</option>
+                          <option key={num} value={num}>
+                            {num}
+                          </option>
                         ))}
                       </select>
                       <button
@@ -297,44 +323,17 @@ const SavedRecipes: React.FC<SavedRecipesProps> = ({ recipes, setRecipes }) => {
                     </button>
                   )}
                 </div>
-                {/* <div>
-                  {recipe.rating === 0 ? "Current Rating: Not Set" : `Current Rating: ${recipe.rating}/5`}
-                  <br/>
-                  {editingRecipeId === recipe.id ? (
-                    <select
-                      value={newRating ?? recipe.rating}
-                      onChange={(e) => setNewRating(Number(e.target.value))}
-                      onBlur={() => {
-                        if (newRating !== null) updateRating(recipe.id, newRating);
-                      }}
-                      className="mt-2 px-2 py-1 border rounded"
-                    >
-                      {[0, 1, 2, 3, 4, 5].map((num) => (
-                        <option key={num} value={num}>{num}</option>
-                      ))}
-                    </select>
-                  ) : (
-                    <button
-                      onClick={() => setEditingRecipeId(recipe.id)}
-                      className="mt-2 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-                    >
-                      Edit Rating
-                    </button>
-                  )}
-                </div> */}
 
-                {/* <div>
-                  {recipe.rating === 0 ? "Current Rating: Not Set" : recipe.rating}
-                  <br/>
-                  <button
-                    onClick={() => setEditingRecipeId(recipe.id)}
-                    className="mt-2 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-                  >
-                    Edit Rating
-                  </button>
-                </div> */}
+                {/* View Shopping List Button */}
+                <button
+                  onClick={() => router.push(`/ShoppingListPage?recipeId=${recipe.id}`)}
+                  className="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                >
+                  View Shopping List
+                </button>
 
                 {/* Remove Recipe Button */}
+                <> </>
                 <button
                   onClick={() => removeRecipe(recipe)}
                   className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"

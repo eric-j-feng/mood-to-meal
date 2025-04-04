@@ -208,7 +208,7 @@ export default function Profile() {
   }
 
   return (
-    <div className={`max-w-4xl mx-auto p-6 ${myFont.className}`}>
+    <div className={`bg-[url('/assets/texture.jpg')] mx-auto p-6 ${myFont.className}`}>
       <button
         onClick={() => router.push("/main")}
         className="mb-4 px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition"
@@ -216,11 +216,11 @@ export default function Profile() {
         ← Back
       </button>
 
-      <h1 className="text-3xl font-bold text-center text-blue-600">
+      <h1 className="text-4xl font-bold text-center text-green-2000 mb-4">
         Your Profile
       </h1>
 
-      <div className="mt-6 bg-white p-6 shadow-lg rounded-lg">
+      <div className="mt-6 bg-white p-6 shadow-lg rounded-lg max-w-4xl mx-auto ">
         <h2 className="text-xl font-semibold">Your Preferences</h2>
 
         {editMode ? (
@@ -383,7 +383,7 @@ export default function Profile() {
         </div>
       </div>
 
-      <div className="mt-6 bg-white p-6 shadow-lg rounded-lg">
+      <div className="mt-6 bg-white p-6 shadow-lg rounded-lg max-w-4xl mx-auto ">
         <h2 className="text-xl font-semibold">Saved Recipes</h2>
         <SavedRecipes recipes={savedRecipes} setRecipes={setSavedRecipes} />
       </div>

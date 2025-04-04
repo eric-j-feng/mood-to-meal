@@ -122,6 +122,7 @@ const Main = () => {
   const [manualWeatherInput, setManualWeatherInput] = useState(false);
   const [manualWeatherData, setManualWeatherData] = useState<WeatherData | null>(null);
   const [manualLocationInput, setManualLocationInput] = useState(false); // State to toggle manual location input
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const handleCitySelect = (city: string) => {
     setSelectedCity(city);
@@ -324,128 +325,169 @@ const Main = () => {
         
           {/* All input selection */}
           {!showRecipes ? (
-            <div className="w-full max-w-5xl bg-white shadow-lg rounded-2xl p-6 mb-8">
-              {/* Mood Selection */}
-              <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
-                <h4 className="text-xl font-semibold text-gray-800 mb-2">
-                  Choose your primary mood:
-                </h4>
-                <MoodSelector onMoodSelect={handleMoodSelect} />
-              </div>
-
-              {/* Weather Selection */}
-              {manualLocationInput ? (
-                <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
-                  <h4 className="text-xl font-semibold text-gray-800 mb-4">
-                    Enter your city and state:
-                  </h4>
-                  <CitySelector city={selectedCity} setCity={handleCitySelect} />
-                  {selectedCity && (
-                    <p className="mt-4 text-gray-800">
-                      Your City: {selectedCity}
+            <div className="w-full max-w-5xl bg-white shadow-lg rounded-2xl p-6 mb-8 relative">
+              {isCollapsed ? (
+                // Collapsed view - summary of selections
+                <div className="space-y-2">
+                  <p className="text-gray-700">
+                    <span className="font-semibold">Mood:</span> {selectedMood ? selectedMood.charAt(0).toUpperCase() + selectedMood.slice(1) : "Not selected"}
+                  </p>
+                  {weather && (
+                    <p className="text-gray-700">
+                      <span className="font-semibold">Weather:</span> {weather.temperature}°F, {weather.weatherDescription}
                     </p>
                   )}
-                  <StateSelector
-                    state={selectedState}
-                    setState={handleStateSelect}
-                  />
-                  {selectedState && (
-                    <p className="mt-4 text-gray-800">
-                      Your State: {selectedState}
-                    </p>
-                  )}
-                  <button
-                    onClick={handleManualWeatherSubmit}
-                    className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md font-semibold shadow hover:bg-blue-600 transition"
-                  >
-                    Submit Location
-                  </button>
-                  <>  </>
-                  <button
-                    onClick={() => setManualLocationInput(false)}
-                    className="mt-4 px-4 py-2 bg-gray-500 text-white rounded-md font-semibold shadow hover:bg-gray-600 transition"
-                  >
-                    Use Automatic Location
-                  </button>
+                  <p className="text-gray-700">
+                    <span className="font-semibold">Cook Time:</span> {selectedCookTime ? `${selectedCookTime} minutes` : "Not selected"}
+                  </p>
+                  <p className="text-gray-700">
+                    <span className="font-semibold">Type of Meal:</span> {selectedMealType || "Not selected"}
+                  </p>
                 </div>
               ) : (
+                // Expanded view - original content
                 <>
-                  {weather ? (
+                  {/* Mood Selection */}
+                  <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
+                    <h4 className="text-xl font-semibold text-gray-800 mb-2">
+                      Choose your primary mood:
+                    </h4>
+                    <MoodSelector onMoodSelect={handleMoodSelect} />
+                  </div>
+
+                  {/* Weather Selection */}
+                  {manualLocationInput ? (
                     <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
-                      <h4 className="text-xl font-semibold text-gray-800 mb-2">
-                        Weather in {weather.cityName}
+                      <h4 className="text-xl font-semibold text-gray-800 mb-4">
+                        Enter your city and state:
                       </h4>
-                      <p className="text-gray-600">Temperature: {weather.temperature}°F</p>
-                      <p className="text-gray-600">Description: {weather.weatherDescription}</p>
-                      <p className="text-gray-600">Humidity: {weather.humidity}%</p>
-                      <p className="text-gray-600">Wind Speed: {weather.windSpeed} m/s</p>
+                      <CitySelector city={selectedCity} setCity={handleCitySelect} />
+                      {selectedCity && (
+                        <p className="mt-4 text-gray-800">
+                          Your City: {selectedCity}
+                        </p>
+                      )}
+                      <StateSelector
+                        state={selectedState}
+                        setState={handleStateSelect}
+                      />
+                      {selectedState && (
+                        <p className="mt-4 text-gray-800">
+                          Your State: {selectedState}
+                        </p>
+                      )}
                       <button
-                        onClick={() => setManualLocationInput(true)}
+                        onClick={handleManualWeatherSubmit}
                         className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md font-semibold shadow hover:bg-blue-600 transition"
                       >
-                        Enter Location Manually
+                        Submit Location
+                      </button>
+                      <>  </>
+                      <button
+                        onClick={() => setManualLocationInput(false)}
+                        className="mt-4 px-4 py-2 bg-gray-500 text-white rounded-md font-semibold shadow hover:bg-gray-600 transition"
+                      >
+                        Use Automatic Location
                       </button>
                     </div>
                   ) : (
-                    <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
-                      <h4 className="text-xl font-semibold text-gray-800 mb-2">
-                        Weather data not available
-                      </h4>
-                      <button
-                        onClick={() => setManualLocationInput(true)}
-                        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md font-semibold shadow hover:bg-blue-600 transition"
-                      >
-                        Enter Location Manually
-                      </button>
-                    </div>
+                    <>
+                      {weather ? (
+                        <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
+                          <h4 className="text-xl font-semibold text-gray-800 mb-2">
+                            Weather in {weather.cityName}
+                          </h4>
+                          <p className="text-gray-600">Temperature: {weather.temperature}°F</p>
+                          <p className="text-gray-600">Description: {weather.weatherDescription}</p>
+                          <p className="text-gray-600">Humidity: {weather.humidity}%</p>
+                          <p className="text-gray-600">Wind Speed: {weather.windSpeed} m/s</p>
+                          <button
+                            onClick={() => setManualLocationInput(true)}
+                            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md font-semibold shadow hover:bg-blue-600 transition"
+                          >
+                            Enter Location Manually
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
+                          <h4 className="text-xl font-semibold text-gray-800 mb-2">
+                            Weather data not available
+                          </h4>
+                          <button
+                            onClick={() => setManualLocationInput(true)}
+                            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md font-semibold shadow hover:bg-blue-600 transition"
+                          >
+                            Enter Location Manually
+                          </button>
+                        </div>
+                      )}
+                    </>
                   )}
+
+                  {/* Dietary Selection */}
+                  {/* <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
+                    <h4 className="text-xl font-semibold text-gray-800 mb-4">
+                      Dietary Restrictions:
+                    </h4>
+                    <DietarySelector
+                      selectedRestrictions={dietaryRestrictions}
+                      onChange={handleDietaryChange}
+                    />
+                    {dietaryRestrictions.length > 0 && (
+                      <p className="mt-4 text-green-600">
+                        You selected: {dietaryRestrictions.join(", ")}
+                      </p>
+                    )}
+                  </div> */}
+
+                  {/* Cook Time Selector */}
+                  <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
+                    <h4 className="text-xl font-semibold text-gray-800 mb-4">
+                      Cook Time:
+                    </h4>
+                    <h4>Enter your cook time (in minutes):</h4>
+                    <CookTimeSelector
+                      cookTime={selectedCookTime}
+                      setCookTime={handleCookTimeSelect}
+                    />
+                    {selectedCookTime && (
+                      <p>Your Cook Time: {selectedCookTime} minutes</p>
+                    )}
+                  </div>
+
+
+
+
+                  {/* Type of Meal Selector */}
+                  <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
+                    <h4 className="text-xl font-semibold text-gray-800 mb-4">
+                      Type of Meal: 
+                    </h4>
+                    <MealSelector
+                      meal={selectedMealType}
+                      setMeal={handleMealTypeSelect}
+                    />
+                  
+                  </div>
                 </>
               )}
 
-              {/* Dietary Selection */}
-              {/* <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
-                <h4 className="text-xl font-semibold text-gray-800 mb-4">
-                  Dietary Restrictions:
-                </h4>
-                <DietarySelector
-                  selectedRestrictions={dietaryRestrictions}
-                  onChange={handleDietaryChange}
-                />
-                {dietaryRestrictions.length > 0 && (
-                  <p className="mt-4 text-green-600">
-                    You selected: {dietaryRestrictions.join(", ")}
-                  </p>
-                )}
-              </div> */}
-
-              {/* Cook Time Selector */}
-              <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
-                <h4 className="text-xl font-semibold text-gray-800 mb-4">
-                  Cook Time:
-                </h4>
-                <h4>Enter your cook time (in minutes):</h4>
-                <CookTimeSelector
-                  cookTime={selectedCookTime}
-                  setCookTime={handleCookTimeSelect}
-                />
-                {selectedCookTime && (
-                  <p>Your Cook Time: {selectedCookTime} minutes</p>
-                )}
-              </div>
-
-
-
-
-              {/* Type of Meal Selector */}
-              <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
-                <h4 className="text-xl font-semibold text-gray-800 mb-4">
-                  Type of Meal: 
-                </h4>
-                <MealSelector
-                  meal={selectedMealType}
-                  setMeal={handleMealTypeSelect}
-                />
-              
+              {/* Move collapse button to bottom left */}
+              <div className="mt-6 flex justify-start">
+                <button
+                  onClick={() => setIsCollapsed(!isCollapsed)}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
+                >
+                  {isCollapsed ? 'Expand' : 'Collapse'} 
+                  <svg 
+                    className={`w-4 h-4 transform transition-transform ${isCollapsed ? 'rotate-180' : 'rotate-0'}`} 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 15l-7-7-7 7" />
+                  </svg>
+                </button>
               </div>
             </div>
           ) : (
@@ -486,7 +528,12 @@ const Main = () => {
       {/* Add GeminiChat at the bottom */}
       <div className="w-full max-w-5xl mt-8">
         <h2 className="text-2xl font-semibold mb-4">AI Meal Suggestions</h2>
-        <GeminiChat selectedMood={selectedMood} weather={weather} />
+        <GeminiChat 
+          selectedMood={selectedMood} 
+          weather={weather} 
+          selectedCookTime={selectedCookTime}
+          selectedMealType={selectedMealType}
+        />
       </div>
     </main>
   );

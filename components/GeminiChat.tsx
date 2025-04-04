@@ -15,12 +15,13 @@ interface GeminiChatProps {
   selectedMood: string | null;
   weather: WeatherData | null;
   selectedCookTime?: string | null;
+  selectedMealType?: string | null;
 }
 
 interface UserPreferences {
   dietaryRestrictions?: string[];
   cookingSkill?: string;
-  cookingUtensils?: string[];
+  utensils?: Record<string, number>;
 }
 
 interface UserRecipe {
@@ -34,6 +35,7 @@ const GeminiChat: React.FC<GeminiChatProps> = ({
   selectedMood,
   weather,
   selectedCookTime,
+  selectedMealType,
 }) => {
   const [response, setResponse] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -55,7 +57,11 @@ const GeminiChat: React.FC<GeminiChatProps> = ({
 
           if (userSnap.exists()) {
             const data = userSnap.data();
-            setUserPreferences(data.preferences || {});
+            setUserPreferences({
+              dietaryRestrictions: data.preferences?.dietaryRestrictions || [],
+              cookingSkill: data.preferences?.cookingSkill || "",
+              utensils: data.preferences?.utensils || {},
+            });
             setUserRecipes(data.savedRecipes || []);
           }
         } catch (error) {
@@ -69,25 +75,31 @@ const GeminiChat: React.FC<GeminiChatProps> = ({
 
   useEffect(() => {
     setPrompt(generatePrompt());
-  }, [selectedMood, weather, selectedCookTime, userPreferences, userRecipes]);
+  }, [selectedMood, weather, selectedCookTime, selectedMealType, userPreferences, userRecipes]);
 
   const generatePrompt = () => {
     const dietaryConditions = userPreferences.dietaryRestrictions?.length
       ? [`Must be: ${userPreferences.dietaryRestrictions.join(", ")}`]
       : [];
 
-    const materialConditions = userPreferences.cookingUtensils?.length
-      ? [`Cooking Utensils: ${userPreferences.cookingUtensils.join(", ")}`]
+    // Convert utensils object to array of strings with quantities
+    const availableUtensils = userPreferences.utensils
+      ? Object.entries(userPreferences.utensils)
+          .filter(([_, quantity]) => quantity > 0)
+          .map(([utensil, quantity]) => `${utensil} (${quantity})`)
+      : [];
+
+    const materialConditions = availableUtensils.length
+      ? [`Available Utensils: ${availableUtensils.join(", ")}`]
       : [];
 
     const otherConditions = [
       selectedMood && `Mood: ${selectedMood}`,
       weather?.temperature && `Weather Temperature: ${weather.temperature}°F`,
-      weather?.weatherDescription &&
-        `Weather Description: ${weather.weatherDescription}`,
+      weather?.weatherDescription && `Weather Description: ${weather.weatherDescription}`,
       selectedCookTime && `Cook Time: ${selectedCookTime} minutes`,
-      userPreferences.cookingSkill &&
-        `Cooking Skill: ${userPreferences.cookingSkill}`,
+      selectedMealType && `Type of Meal: ${selectedMealType}`,
+      userPreferences.cookingSkill && `Cooking Skill: ${userPreferences.cookingSkill}`,
     ].filter(Boolean);
 
     const recipeRatings = userRecipes.length
@@ -105,6 +117,7 @@ ${dietaryConditions.length ? dietaryConditions.join("\n") : "None specified"}
 Material Constraints:
 ------------------
 ${materialConditions.length ? materialConditions.join("\n") : "None specified"}
+Note: Only suggest recipes that can be made with the available utensils listed above.
 
 Other Constraints:
 ------------------
@@ -127,7 +140,8 @@ Breakfast, Lunch, Dinner, Snack, Vegetarian, Vegan, Gluten-Free, Low-Carb, High-
 Choose tags that best describe the recipe based on its content (e.g. meal type, cuisine, dietary style). Provide them at the end of the recipe in this format:
 **Tags:** Tag1, Tag2, Tag3
 
-Generate a recipe. Do not speak in a conversational tone.`;
+Generate a recipe. Do not speak in a conversational tone.
+IMPORTANT: Only suggest recipes that can be made with the available utensils. If specific utensils are required but not available, do not suggest that recipe.`;
   };
 
   const generateResponse = async () => {

@@ -315,21 +315,6 @@ const Recipes: React.FC<RecipesProps> = ({
         </div>
       )}
 
-      <div className="mt-6">
-        <h2>Shopping List</h2>
-        {isRecipeSaved && recipe.cleanedIngredients ? (
-            <ul>
-                {recipe.cleanedIngredients.split('\n').map((item, index) => (
-                    <li key={index}>
-                        <input type="checkbox" /> {item}
-                    </li>
-                ))}
-            </ul>
-        ) : (
-            <p>Save the recipe to view the shopping list.</p> // Message if the recipe is not saved
-        )}
-      </div>
-
       </div>
     </div>
   );

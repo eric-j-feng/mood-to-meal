@@ -108,7 +108,7 @@ const cleanIngredients = (ingredients: string) => {
     .map((line) => line.trim()) // Trim whitespace from each line
     .filter((line) => line && line !== "**" && line !== ":**") // Remove empty lines and unwanted markers
     .map((line) => line.replace(/^\*\s*/, "")) // Remove leading '* ' from each line
-    .join("\n"); // Join the cleaned lines back into a string
+    .join("\n"); // Join the cleaned lines back into a string.
 };
 
 const Recipes: React.FC<RecipesProps> = ({

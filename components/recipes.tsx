@@ -224,7 +224,6 @@ const Recipes: React.FC<RecipesProps> = ({
           }),
         });
         setIsRecipeSaved(true); // Mark the recipe as saved
-        alert("Recipe saved!");
         setIsRating(false);
       } catch (error) {
         console.error("Error saving recipe: ", error);
@@ -260,9 +259,14 @@ const Recipes: React.FC<RecipesProps> = ({
         <div className="flex gap-4">
           <button
             onClick={saveRecipe}
-            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+            disabled={isRecipeSaved}
+            className={`px-4 py-2 rounded transition-colors ${
+              isRecipeSaved
+                ? "bg-gray-400 text-white cursor-not-allowed"
+                : "bg-green-500 text-white hover:bg-green-600"
+            }`}
           >
-            Save Recipe
+            {isRecipeSaved ? "Recipe Saved" : "Save Recipe"}
           </button>
           <button
             onClick={() => setIsEditing(!isEditing)}

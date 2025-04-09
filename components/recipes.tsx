@@ -224,6 +224,19 @@ const Recipes: React.FC<RecipesProps> = ({
 
       const userRef = doc(db, "users", user.uid);
       try {
+        await updateDoc(userRef, {
+          savedRecipes: arrayUnion({
+            id: recipe.id,
+            title: recipe.title,
+            content: recipe.content,
+            ingredients: recipe.ingredients, // Include the extracted ingredients here
+            rating: rating, // Use the rating variable
+            tags: recipe.tags || [],
+            cleanedIngredients: cleanedIngredients, // Ensure cleanedIngredients is included
+          }),
+        });
+        setIsRecipeSaved(true); // Mark the recipe as saved
+        setIsRating(false);
         if (!isRecipeSaved) {
           await updateDoc(userRef, {
             savedRecipes: arrayUnion({
@@ -237,7 +250,6 @@ const Recipes: React.FC<RecipesProps> = ({
             }),
           });
           setIsRecipeSaved(true);
-          alert("Recipe saved!");
         } else {
           await updateDoc(userRef, {
             savedRecipes: arrayRemove({
@@ -288,13 +300,14 @@ const Recipes: React.FC<RecipesProps> = ({
         <div className="flex gap-4">
           <button
             onClick={saveRecipe}
+            disabled={isRecipeSaved}
             className={`px-4 py-2 rounded transition-colors ${
               isRecipeSaved
-                ? "bg-red-500 text-white hover:bg-red-600"
+                ? "bg-gray-400 text-white cursor-not-allowed"
                 : "bg-green-500 text-white hover:bg-green-600"
             }`}
           >
-            {isRecipeSaved ? "Remove" : "Save Recipe"}
+            {isRecipeSaved ? "Recipe Saved" : "Save Recipe"}
           </button>
           <button
             onClick={() => setIsEditing(!isEditing)}

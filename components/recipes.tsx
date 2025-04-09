@@ -224,19 +224,6 @@ const Recipes: React.FC<RecipesProps> = ({
 
       const userRef = doc(db, "users", user.uid);
       try {
-        await updateDoc(userRef, {
-          savedRecipes: arrayUnion({
-            id: recipe.id,
-            title: recipe.title,
-            content: recipe.content,
-            ingredients: recipe.ingredients, // Include the extracted ingredients here
-            rating: rating, // Use the rating variable
-            tags: recipe.tags || [],
-            cleanedIngredients: cleanedIngredients, // Ensure cleanedIngredients is included
-          }),
-        });
-        setIsRecipeSaved(true); // Mark the recipe as saved
-        setIsRating(false);
         if (!isRecipeSaved) {
           await updateDoc(userRef, {
             savedRecipes: arrayUnion({
@@ -263,11 +250,9 @@ const Recipes: React.FC<RecipesProps> = ({
             }),
           });
           setIsRecipeSaved(false);
-          alert("Recipe removed!");
         }
       } catch (error) {
         console.error("Error saving/removing recipe: ", error);
-        alert("Failed to save/remove recipe.");
       }
     } else {
       alert("You need to be logged in to save recipes.");
@@ -300,14 +285,13 @@ const Recipes: React.FC<RecipesProps> = ({
         <div className="flex gap-4">
           <button
             onClick={saveRecipe}
-            disabled={isRecipeSaved}
             className={`px-4 py-2 rounded transition-colors ${
               isRecipeSaved
-                ? "bg-gray-400 text-white cursor-not-allowed"
+                ? "bg-red-500 text-white hover:bg-red-600"
                 : "bg-green-500 text-white hover:bg-green-600"
             }`}
           >
-            {isRecipeSaved ? "Recipe Saved" : "Save Recipe"}
+            {isRecipeSaved ? "Remove" : "Save Recipe"}
           </button>
           <button
             onClick={() => setIsEditing(!isEditing)}

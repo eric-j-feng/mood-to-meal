@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getAuth } from "firebase/auth";
-import { doc, updateDoc, arrayUnion } from "firebase/firestore";
+import { doc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import { db } from "@/auth/firebase";
 import MarkdownDisplay from "./MarkdownDisplay";
 
@@ -46,12 +46,27 @@ interface RecipesProps {
   selectedCookTime: string | null;
 }
 
-const allowedTags = [ 
-  "Breakfast", "Lunch", "Dinner", "Snack",
-  "Vegetarian", "Vegan", "Gluten-Free", "Low-Carb",
-  "High-Protein", "Comfort Food", "Spicy", "Sweet",
-  "Keto", "Paleo", "Healthy", "Quick",
-  "Italian", "Asian", "Mexican", "American"
+const allowedTags = [
+  "Breakfast",
+  "Lunch",
+  "Dinner",
+  "Snack",
+  "Vegetarian",
+  "Vegan",
+  "Gluten-Free",
+  "Low-Carb",
+  "High-Protein",
+  "Comfort Food",
+  "Spicy",
+  "Sweet",
+  "Keto",
+  "Paleo",
+  "Healthy",
+  "Quick",
+  "Italian",
+  "Asian",
+  "Mexican",
+  "American",
 ];
 
 const generateTags = (text: string): string[] => {
@@ -66,7 +81,8 @@ const generateTags = (text: string): string[] => {
   if (lower.includes("vegetarian")) tags.push("Vegetarian");
   if (lower.includes("vegan")) tags.push("Vegan");
   if (lower.includes("gluten-free")) tags.push("Gluten-Free");
-  if (lower.includes("low carb") || lower.includes("low-carb")) tags.push("Low-Carb");
+  if (lower.includes("low carb") || lower.includes("low-carb"))
+    tags.push("Low-Carb");
   if (lower.includes("protein")) tags.push("High-Protein");
   if (lower.includes("comfort")) tags.push("Comfort Food");
   if (lower.includes("spicy")) tags.push("Spicy");
@@ -88,11 +104,11 @@ const generateTags = (text: string): string[] => {
 // Function to clean up the ingredients list
 const cleanIngredients = (ingredients: string) => {
   return ingredients
-    .split('\n') // Split the string into lines
-    .map(line => line.trim()) // Trim whitespace from each line
-    .filter(line => line && line !== '**' && line !== ':**') // Remove empty lines and unwanted markers
-    .map(line => line.replace(/^\*\s*/, '')) // Remove leading '* ' from each line
-    .join('\n'); // Join the cleaned lines back into a string
+    .split("\n") // Split the string into lines
+    .map((line) => line.trim()) // Trim whitespace from each line
+    .filter((line) => line && line !== "**" && line !== ":**") // Remove empty lines and unwanted markers
+    .map((line) => line.replace(/^\*\s*/, "")) // Remove leading '* ' from each line
+    .join("\n"); // Join the cleaned lines back into a string.
 };
 
 const Recipes: React.FC<RecipesProps> = ({
@@ -106,35 +122,33 @@ const Recipes: React.FC<RecipesProps> = ({
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [modificationText, setModificationText] = useState<string>("");
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [ingredients, setIngredients] = useState<string>('');
-  const [isRecipeSaved, setIsRecipeSaved] = useState<boolean>(false); // New state to track if the recipe is saved
-  const [isRating, setIsRating] = useState<boolean>(false);
-  const [rating, setRating] = useState<number>(0);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [ingredients, setIngredients] = useState<string>("");
+  const [isRecipeSaved, setIsRecipeSaved] = useState<boolean>(false);
 
   useEffect(() => {
     if (geminiSuggestion) {
-      // Split the response into title and content
       const lines = geminiSuggestion.split("\n");
       let title = "";
       let contentLines = [...lines];
-      let ingredients = '';
+      let ingredients = "";
       let tags: string[] = [];
 
-      const tagLineIndex = contentLines.findIndex(line => line.startsWith("TAGS:"));
+      const tagLineIndex = contentLines.findIndex((line) =>
+        line.startsWith("TAGS:")
+      );
       if (tagLineIndex !== -1) {
         const tagLine = contentLines[tagLineIndex];
-        tags = tagLine.replace("TAGS:", "")
+        tags = tagLine
+          .replace("TAGS:", "")
           .split(",")
-          .map(tag => tag.trim())
-          .filter(tag => allowedTags.includes(tag)); // Validate
+          .map((tag) => tag.trim())
+          .filter((tag) => allowedTags.includes(tag));
         contentLines.splice(tagLineIndex, 1);
       } else {
         const fullText = contentLines.join(" ").toLowerCase();
         tags = generateTags(fullText);
       }
 
-      // Look for a title in the first few lines
       for (let i = 0; i < Math.min(3, contentLines.length); i++) {
         const line = contentLines[i];
         if (
@@ -142,50 +156,51 @@ const Recipes: React.FC<RecipesProps> = ({
           (line.toLowerCase().includes("recipe") || line.match(/^#+ /))
         ) {
           title = line.replace(/^#+ /, "").replace(" Recipe", "").trim();
-          contentLines.splice(i, 1); // Remove the title line from content
+          contentLines.splice(i, 1);
           break;
         }
       }
 
-      // If no title found, use the first non-empty line
       if (!title) {
         const firstNonEmptyIndex = lines.findIndex(
           (line) => line.trim().length > 0
         );
         if (firstNonEmptyIndex !== -1) {
           title = lines[firstNonEmptyIndex];
-          contentLines.splice(firstNonEmptyIndex, 1); // Remove the title line from content
+          contentLines.splice(firstNonEmptyIndex, 1);
         } else {
           title = "Generated Recipe";
         }
       }
 
-      // Extract ingredients between "Ingredients" and "Instructions"
-      const content = contentLines.join('\n').trim();
-      const ingredientsStart = content.toLowerCase().indexOf('ingredients');
-      const instructionsStart = content.toLowerCase().indexOf('instructions');
-      if (ingredientsStart !== -1 && instructionsStart !== -1 && instructionsStart > ingredientsStart) {
+      const content = contentLines.join("\n").trim();
+      const ingredientsStart = content.toLowerCase().indexOf("ingredients");
+      const instructionsStart = content.toLowerCase().indexOf("instructions");
+      if (
+        ingredientsStart !== -1 &&
+        instructionsStart !== -1 &&
+        instructionsStart > ingredientsStart
+      ) {
         ingredients = content
-          .substring(ingredientsStart + 'ingredients'.length, instructionsStart)
-          .split('\n')
-          .filter(line => !line.toLowerCase().startsWith('equipment')) // Exclude "Equipment" lines
-          .join('\n')
+          .substring(ingredientsStart + "ingredients".length, instructionsStart)
+          .split("\n")
+          .filter((line) => !line.toLowerCase().startsWith("equipment"))
+          .join("\n")
           .trim();
       }
 
-      const cleanedIngredients = cleanIngredients(ingredients); // Clean the ingredients here
+      const cleanedIngredients = cleanIngredients(ingredients);
 
       setRecipe({
         id: Date.now().toString(),
         title,
-        content: contentLines.join("\n").trim(), // Use this value for content
-        ingredients, // Include the extracted ingredients here
-        cleanedIngredients, // Add cleanedIngredients to the Recipe object
+        content: contentLines.join("\n").trim(),
+        ingredients,
+        cleanedIngredients,
         rating: 0,
         tags,
       });
 
-      // Store the extracted ingredients in a separate state
       setIngredients(ingredients);
     }
   }, [geminiSuggestion]);
@@ -195,40 +210,52 @@ const Recipes: React.FC<RecipesProps> = ({
       modifyRecipe(modificationText);
       setModificationText("");
       setIsEditing(false);
+      setIsRecipeSaved(false); // Reset the button to "Save Recipe" state
     }
   };
 
-  const saveRecipe = () => {
-    setIsRating(true);
-  };
-
-  const handleRating = async () => {
+  const saveRecipe = async () => {
     const auth = getAuth();
     const user = auth.currentUser;
 
     if (user && recipe) {
-      // Ensure cleanedIngredients is properly set before saving
-      const cleanedIngredients = recipe.cleanedIngredients || cleanIngredients(recipe.ingredients);
+      const cleanedIngredients =
+        recipe.cleanedIngredients || cleanIngredients(recipe.ingredients);
 
       const userRef = doc(db, "users", user.uid);
       try {
-        await updateDoc(userRef, {
-          savedRecipes: arrayUnion({
-            id: recipe.id,
-            title: recipe.title,
-            content: recipe.content,
-            ingredients: recipe.ingredients, // Include the extracted ingredients here
-            rating: rating, // Use the rating variable
-            tags: recipe.tags || [],
-            cleanedIngredients: cleanedIngredients, // Ensure cleanedIngredients is included
-          }),
-        });
-        setIsRecipeSaved(true); // Mark the recipe as saved
-        alert("Recipe saved!");
-        setIsRating(false);
+        if (!isRecipeSaved) {
+          await updateDoc(userRef, {
+            savedRecipes: arrayUnion({
+              id: recipe.id,
+              title: recipe.title,
+              content: recipe.content,
+              ingredients: recipe.ingredients,
+              rating: 0,
+              tags: recipe.tags || [],
+              cleanedIngredients: cleanedIngredients,
+            }),
+          });
+          setIsRecipeSaved(true);
+          alert("Recipe saved!");
+        } else {
+          await updateDoc(userRef, {
+            savedRecipes: arrayRemove({
+              id: recipe.id,
+              title: recipe.title,
+              content: recipe.content,
+              ingredients: recipe.ingredients,
+              rating: 0,
+              tags: recipe.tags || [],
+              cleanedIngredients: cleanedIngredients,
+            }),
+          });
+          setIsRecipeSaved(false);
+          alert("Recipe removed!");
+        }
       } catch (error) {
-        console.error("Error saving recipe: ", error);
-        alert("Failed to save recipe.");
+        console.error("Error saving/removing recipe: ", error);
+        alert("Failed to save/remove recipe.");
       }
     } else {
       alert("You need to be logged in to save recipes.");
@@ -237,7 +264,6 @@ const Recipes: React.FC<RecipesProps> = ({
 
   if (!recipe) return null;
 
-  
   return (
     <div className="max-w-7xl mx-auto px-4">
       <div className="border rounded-lg overflow-hidden shadow-lg bg-white p-6">
@@ -247,7 +273,9 @@ const Recipes: React.FC<RecipesProps> = ({
             {recipe.tags.map((tag: string) => (
               <span
                 key={tag}
-                className={`text-xs font-medium px-2 py-1 rounded-full ${tagColorMap[tag] || "bg-gray-200 text-gray-800"}`}
+                className={`text-xs font-medium px-2 py-1 rounded-full ${
+                  tagColorMap[tag] || "bg-gray-200 text-gray-800"
+                }`}
               >
                 {tag}
               </span>
@@ -260,9 +288,13 @@ const Recipes: React.FC<RecipesProps> = ({
         <div className="flex gap-4">
           <button
             onClick={saveRecipe}
-            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+            className={`px-4 py-2 rounded transition-colors ${
+              isRecipeSaved
+                ? "bg-red-500 text-white hover:bg-red-600"
+                : "bg-green-500 text-white hover:bg-green-600"
+            }`}
           >
-            Save Recipe
+            {isRecipeSaved ? "Remove" : "Save Recipe"}
           </button>
           <button
             onClick={() => setIsEditing(!isEditing)}
@@ -288,33 +320,6 @@ const Recipes: React.FC<RecipesProps> = ({
             </button>
           </div>
         )}
-
-      {isRating && (
-        <div className="mt-4">
-          <label className="block">
-            <span className="font-semibold">Rate this Recipe:</span>
-            <select
-              value={rating}
-              onChange={(e) => setRating(parseInt(e.target.value))}
-              className="block w-full mt-2 p-2 border rounded"
-            >
-              <option value={0}>Select Rating</option>
-              <option value={1}>1 - Poor</option>
-              <option value={2}>2 - Fair</option>
-              <option value={3}>3 - Good</option>
-              <option value={4}>4 - Very Good</option>
-              <option value={5}>5 - Excellent</option>
-            </select>
-          </label>
-          <button
-            onClick={handleRating}
-            className="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
-          >
-            Submit Rating
-          </button>
-        </div>
-      )}
-
       </div>
     </div>
   );

@@ -156,23 +156,33 @@ const SavedRecipes: React.FC<SavedRecipesProps> = ({ recipes, setRecipes }) => {
     fetchSavedRecipes();
   }, [userId]);
 
-  const removeRecipe = async (recipe: SavedRecipe) => {
+  const removeRecipe = async (recipeToRemove: SavedRecipe) => {
     if (userId) {
       const userRef = doc(db, "users", userId);
       try {
-        await updateDoc(userRef, {
-          savedRecipes: arrayRemove({ ...recipe, rating: 0 }),
-        });
-        setRecipes((prevRecipes) =>
-          prevRecipes.filter((r) => r.id !== recipe.id)
-        );
-        alert("Recipe removed!");
+        const userDoc = await getDoc(userRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const savedRecipes = userData.savedRecipes || [];
+  
+          const updatedRecipes = savedRecipes.filter(
+            (r: SavedRecipe) => r.id !== recipeToRemove.id
+          );
+  
+          await updateDoc(userRef, {
+            savedRecipes: updatedRecipes,
+          });
+  
+          setRecipes(updatedRecipes);
+          alert("Recipe removed!");
+        }
       } catch (error) {
         console.error("Error removing recipe: ", error);
         alert("Failed to remove recipe.");
       }
     }
   };
+  
 
   const updateRating = async (recipeId: string) => {
     if (userId && newRating !== null) {

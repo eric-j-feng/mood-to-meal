@@ -2,14 +2,13 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/auth/firebase";
-import { getAuth } from "firebase/auth";
-import { Poppins} from "next/font/google";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { Poppins } from "next/font/google";
+
 const myFont = Poppins({
-  weight:['400'],
-  subsets: ['latin']
-})
-
-
+  weight: ['400'],
+  subsets: ['latin'],
+});
 
 const ShoppingListPage: React.FC = () => {
   const router = useRouter();
@@ -20,16 +19,7 @@ const ShoppingListPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const fetchShoppingList = async () => {
-      const auth = getAuth();
-      const userId = auth.currentUser?.uid;
-
-      if (!userId) {
-        setError("User not logged in.");
-        setLoading(false);
-        return;
-      }
-
+    const fetchShoppingList = async (userId: string) => {
       try {
         const userRef = doc(db, "users", userId);
         const userDoc = await getDoc(userRef);
@@ -39,8 +29,6 @@ const ShoppingListPage: React.FC = () => {
           const recipe = userData.savedRecipes.find(
             (r: any) => r.id === recipeId
           );
-
-          console.log(recipe);
 
           if (!recipe) {
             setError("Recipe not found.");
@@ -60,7 +48,17 @@ const ShoppingListPage: React.FC = () => {
       }
     };
 
-    fetchShoppingList();
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        fetchShoppingList(user.uid);
+      } else {
+        setError("User not logged in.");
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
   }, [recipeId]);
 
   if (loading) return <div>Loading...</div>;

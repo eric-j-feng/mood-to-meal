@@ -323,191 +323,170 @@ const Main = () => {
 
   
         
-          {/* All input selection */}
-          {!showRecipes ? (
-            <div className="w-full max-w-5xl bg-white shadow-lg rounded-2xl p-6 mb-8 relative">
-              {isCollapsed ? (
-                // Collapsed view - summary of selections
-                <div className="space-y-2">
+          {/* Selections Component - Always visible */}
+          <div className="w-full max-w-5xl bg-white shadow-lg rounded-2xl p-6 mb-8 relative">
+            {isCollapsed ? (
+              // Collapsed view - summary of selections
+              <div className="space-y-2">
+                <p className="text-gray-700">
+                  <span className="font-semibold">Mood:</span> {selectedMood ? selectedMood.charAt(0).toUpperCase() + selectedMood.slice(1) : "Not selected"}
+                </p>
+                {weather && (
                   <p className="text-gray-700">
-                    <span className="font-semibold">Mood:</span> {selectedMood ? selectedMood.charAt(0).toUpperCase() + selectedMood.slice(1) : "Not selected"}
+                    <span className="font-semibold">Weather:</span> {weather.temperature}°F, {weather.weatherDescription}
                   </p>
-                  {weather && (
-                    <p className="text-gray-700">
-                      <span className="font-semibold">Weather:</span> {weather.temperature}°F, {weather.weatherDescription}
-                    </p>
-                  )}
-                  <p className="text-gray-700">
-                    <span className="font-semibold">Cook Time:</span> {selectedCookTime ? `${selectedCookTime} minutes` : "Not selected"}
-                  </p>
-                  <p className="text-gray-700">
-                    <span className="font-semibold">Type of Meal:</span> {selectedMealType || "Not selected"}
-                  </p>
-                </div>
-              ) : (
-                // Expanded view - original content
-                <>
-                  {/* Mood Selection */}
-                  <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
-                    <h4 className="text-xl font-semibold text-gray-800 mb-2">
-                      Choose your primary mood:
-                    </h4>
-                    <MoodSelector onMoodSelect={handleMoodSelect} />
-                  </div>
-
-                  {/* Weather Selection */}
-                  <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
-                    {manualLocationInput ? (
-                      <>
-                        <h4 className="text-xl font-semibold text-gray-800 mb-4">
-                          Enter your city and state:
-                        </h4>
-                        <CitySelector city={selectedCity} setCity={handleCitySelect} />
-                        {selectedCity && (
-                          <p className="mt-4 text-gray-800">
-                            Your City: {selectedCity}
-                          </p>
-                        )}
-                        <StateSelector
-                          state={selectedState}
-                          setState={handleStateSelect}
-                        />
-                        {selectedState && (
-                          <p className="mt-4 text-gray-800">
-                            Your State: {selectedState}
-                          </p>
-                        )}
-                        <button
-                          onClick={handleManualWeatherSubmit}
-                          disabled={isLoadingWeather || !selectedCity || !selectedState}
-                          className={`mt-4 px-4 py-2 ${
-                            isLoadingWeather || !selectedCity || !selectedState
-                              ? 'bg-gray-400 cursor-not-allowed'
-                              : 'bg-blue-500 hover:bg-blue-600'
-                          } text-white rounded-md font-semibold shadow transition`}
-                        >
-                          {isLoadingWeather ? "Loading..." : "Submit Location"}
-                        </button>
-                        {weatherError && (
-                          <p className="mt-2 text-red-500">{weatherError}</p>
-                        )}
-                        <>  </>
-                        <button
-                          onClick={handleUseAutomaticLocation}
-                          className="mt-4 px-4 py-2 bg-gray-500 text-white rounded-md font-semibold shadow hover:bg-gray-600 transition"
-                        >
-                          Use Automatic Location
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        {isLoadingWeather ? (
-                          <div className="flex items-center justify-center py-4">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                          </div>
-                        ) : weather ? (
-                          <>
-                            <h4 className="text-xl font-semibold text-gray-800 mb-2">
-                              Weather in {weather.cityName}
-                            </h4>
-                            <p className="text-gray-600">Temperature: {weather.temperature}°F</p>
-                            <p className="text-gray-600">Description: {weather.weatherDescription}</p>
-                            <p className="text-gray-600">Humidity: {weather.humidity}%</p>
-                            <p className="text-gray-600">Wind Speed: {weather.windSpeed} m/s</p>
-                            <button
-                              onClick={() => setManualLocationInput(true)}
-                              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md font-semibold shadow hover:bg-blue-600 transition"
-                            >
-                              Enter Location Manually
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <h4 className="text-xl font-semibold text-gray-800 mb-2">
-                              {weatherError || "Weather data not available"}
-                            </h4>
-                            <button
-                              onClick={() => setManualLocationInput(true)}
-                              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md font-semibold shadow hover:bg-blue-600 transition"
-                            >
-                              Enter Location Manually
-                            </button>
-                          </>
-                        )}
-                      </>
-                    )}
-                  </div>
-
-                  {/* Cook Time Selector */}
-                  <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
-                    <h4 className="text-xl font-semibold text-gray-800 mb-4">
-                      Cook Time:
-                    </h4>
-                    <h4>Enter your cook time (in minutes):</h4>
-                    <CookTimeSelector
-                      cookTime={selectedCookTime}
-                      setCookTime={handleCookTimeSelect}
-                    />
-                    {selectedCookTime && (
-                      <p>Your Cook Time: {selectedCookTime} minutes</p>
-                    )}
-                  </div>
-
-                  {/* Type of Meal Selector */}
-                  <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
-                    <h4 className="text-xl font-semibold text-gray-800 mb-4">
-                      Type of Meal: 
-                    </h4>
-                    <MealSelector
-                      meal={selectedMealType}
-                      setMeal={handleMealTypeSelect}
-                    />
-                  </div>
-                </>
-              )}
-
-              {/* Collapse button - always visible */}
-              <div className="mt-6 flex justify-start">
-                <button
-                  onClick={() => setIsCollapsed(!isCollapsed)}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
-                >
-                  {isCollapsed ? 'Expand' : 'Collapse'} 
-                  <svg 
-                    className={`w-4 h-4 transform transition-transform ${isCollapsed ? 'rotate-180' : 'rotate-0'}`} 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 15l-7-7-7 7" />
-                  </svg>
-                </button>
+                )}
+                <p className="text-gray-700">
+                  <span className="font-semibold">Cook Time:</span> {selectedCookTime ? `${selectedCookTime} minutes` : "Not selected"}
+                </p>
+                <p className="text-gray-700">
+                  <span className="font-semibold">Type of Meal:</span> {selectedMealType || "Not selected"}
+                </p>
               </div>
-            </div>
-          ) : (
-            // Recipes Section
-            <div className="w-full max-w-5xl mt-8">
-              <h2 className="text-2xl font-semibold mb-4">
-                Recipes Based on Your Preferences
-              </h2>
-              <p>
-                <strong>City:</strong> {selectedCity || "Not selected"}
-              </p>
-              <p>
-                <strong>State:</strong> {selectedState || "Not selected"}
-              </p>
-              <p>
-                <strong>Cook Time:</strong> {selectedCookTime || "Not selected"}{" "}
-                minutes
-              </p>
-              {/* <p>
-                <strong>Dietary Restrictions:</strong>{" "}
-                {dietaryRestrictions.length > 0
-                  ? dietaryRestrictions.join(", ")
-                  : "None"}
-              </p> */}
+            ) : (
+              // Expanded view - original content
+              <>
+                {/* Mood Selection */}
+                <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
+                  <h4 className="text-xl font-semibold text-gray-800 mb-2">
+                    Choose your primary mood:
+                  </h4>
+                  <MoodSelector onMoodSelect={handleMoodSelect} />
+                </div>
 
-            
+                {/* Weather Selection */}
+                <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
+                  {manualLocationInput ? (
+                    <>
+                      <h4 className="text-xl font-semibold text-gray-800 mb-4">
+                        Enter your city and state:
+                      </h4>
+                      <CitySelector city={selectedCity} setCity={handleCitySelect} />
+                      {selectedCity && (
+                        <p className="mt-4 text-gray-800">
+                          Your City: {selectedCity}
+                        </p>
+                      )}
+                      <StateSelector
+                        state={selectedState}
+                        setState={handleStateSelect}
+                      />
+                      {selectedState && (
+                        <p className="mt-4 text-gray-800">
+                          Your State: {selectedState}
+                        </p>
+                      )}
+                      <button
+                        onClick={handleManualWeatherSubmit}
+                        disabled={isLoadingWeather || !selectedCity || !selectedState}
+                        className={`mt-4 px-4 py-2 ${
+                          isLoadingWeather || !selectedCity || !selectedState
+                            ? 'bg-gray-400 cursor-not-allowed'
+                            : 'bg-blue-500 hover:bg-blue-600'
+                        } text-white rounded-md font-semibold shadow transition`}
+                      >
+                        {isLoadingWeather ? "Loading..." : "Submit Location"}
+                      </button>
+                      {weatherError && (
+                        <p className="mt-2 text-red-500">{weatherError}</p>
+                      )}
+                      <>  </>
+                      <button
+                        onClick={handleUseAutomaticLocation}
+                        className="mt-4 px-4 py-2 bg-gray-500 text-white rounded-md font-semibold shadow hover:bg-gray-600 transition"
+                      >
+                        Use Automatic Location
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {isLoadingWeather ? (
+                        <div className="flex items-center justify-center py-4">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                        </div>
+                      ) : weather ? (
+                        <>
+                          <h4 className="text-xl font-semibold text-gray-800 mb-2">
+                            Weather in {weather.cityName}
+                          </h4>
+                          <p className="text-gray-600">Temperature: {weather.temperature}°F</p>
+                          <p className="text-gray-600">Description: {weather.weatherDescription}</p>
+                          <p className="text-gray-600">Humidity: {weather.humidity}%</p>
+                          <p className="text-gray-600">Wind Speed: {weather.windSpeed} m/s</p>
+                          <button
+                            onClick={() => setManualLocationInput(true)}
+                            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md font-semibold shadow hover:bg-blue-600 transition"
+                          >
+                            Enter Location Manually
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <h4 className="text-xl font-semibold text-gray-800 mb-2">
+                            {weatherError || "Weather data not available"}
+                          </h4>
+                          <button
+                            onClick={() => setManualLocationInput(true)}
+                            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md font-semibold shadow hover:bg-blue-600 transition"
+                          >
+                            Enter Location Manually
+                          </button>
+                        </>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                {/* Cook Time Selector */}
+                <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
+                  <h4 className="text-xl font-semibold text-gray-800 mb-4">
+                    Cook Time:
+                  </h4>
+                  <h4>Enter your cook time (in minutes):</h4>
+                  <CookTimeSelector
+                    cookTime={selectedCookTime}
+                    setCookTime={handleCookTimeSelect}
+                  />
+                  {selectedCookTime && (
+                    <p>Your Cook Time: {selectedCookTime} minutes</p>
+                  )}
+                </div>
+
+                {/* Type of Meal Selector */}
+                <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
+                  <h4 className="text-xl font-semibold text-gray-800 mb-4">
+                    Type of Meal: 
+                  </h4>
+                  <MealSelector
+                    meal={selectedMealType}
+                    setMeal={handleMealTypeSelect}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Collapse button - always visible */}
+            <div className="mt-6 flex justify-start">
+              <button
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
+              >
+                {isCollapsed ? 'Expand' : 'Collapse'} 
+                <svg 
+                  className={`w-4 h-4 transform transition-transform ${isCollapsed ? 'rotate-180' : 'rotate-0'}`} 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 15l-7-7-7 7" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {/* Recipes Section - Shown below selections when available */}
+          {showRecipes && (
+            <div className="w-full max-w-5xl mt-8">
               <Recipes 
                 selectedCity={selectedCity}
                 selectedState={selectedState}

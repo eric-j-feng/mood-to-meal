@@ -187,7 +187,27 @@ Important: Only suggest recipes that can be made with the available utensils. Do
       const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
       const modResult = await model.generateContent(
-        `Modify the following recipe:\n\n${response}\n\nModification request: ${modificationRequest}`
+        `Modify the following recipe according to this request: ${modificationRequest}
+
+Original recipe:
+${response}
+
+Important formatting instructions:
+1. Start directly with the recipe name (no introductory text)
+2. Follow with Description, Ingredients, and Instructions sections
+3. End with TAGS section
+4. Do not include any conversational text or acknowledgments
+5. Keep the same format as the original recipe
+6. Do not include phrases like "here's the modified recipe" or "okay"
+
+Format:
+Recipe name (do not include the words "Recipe name" in the output)
+Description
+Ingredients
+Instructions
+
+End with:
+TAGS: Tag1, Tag2, Tag3`
       );
       const modifiedText = modResult.response.text();
       setResponse(modifiedText);

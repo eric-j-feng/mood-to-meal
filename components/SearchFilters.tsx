@@ -29,7 +29,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
           placeholder="Search recipes..."
           className="p-2 border rounded"
         />
-      </div> */}
+      </div>
 
       <div>
         <input

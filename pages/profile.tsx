@@ -75,6 +75,10 @@ interface SavedRecipe {
   id: string;
   title: string;
   content: string;
+  description: string;
+  tags: string[];
+  rating: number;
+  cleanedIngredients?: string;
 }
 
 export default function Profile() {

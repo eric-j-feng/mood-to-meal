@@ -4,7 +4,6 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/auth/firebase";
 import { getAuth } from "firebase/auth";
 
-
 const ShoppingListPage: React.FC = () => {
   const router = useRouter();
   const { recipeId } = router.query;
@@ -64,10 +63,15 @@ const ShoppingListPage: React.FC = () => {
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Shopping List</h1>
       {shoppingList.length > 0 ? (
-        <ul className="list-disc pl-5">
+        <ul className="pl-5">
           {shoppingList.map((item, index) => (
-            <li key={index} className="mb-2">
-              {item}
+            <li key={index} className="mb-2 flex items-center">
+              <input
+                type="checkbox"
+                id={`item-${index}`}
+                className="mr-2"
+              />
+              <label htmlFor={`item-${index}`}>{item}</label>
             </li>
           ))}
         </ul>

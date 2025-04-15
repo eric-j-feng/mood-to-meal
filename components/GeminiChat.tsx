@@ -107,7 +107,7 @@ const GeminiChat: React.FC<GeminiChatProps> = ({
           .join("\n")}`
       : "No previous recipe ratings.";
 
-    return `A user wants a recipe based on their mood and current weather conditions. Your task is to generate a recipe that aligns with the following criteria:
+    return `Generate a recipe that matches these requirements:
 
 Dietary Constraints:
 ------------------
@@ -124,23 +124,29 @@ ${otherConditions.length ? otherConditions.join("\n") : "None specified"}
 
 ${recipeRatings}
 
-If the user is feeling happy/energetic, generate vibrant, fresh, or exciting recipes.
-If the user is tired or stressed, generate comforting, simple, or nourishing meals.
-If the user is sad or down, generate cozy, uplifting, or nostalgic dishes.
-If the weather is cold/rainy, generate warm, hearty, or soothing meals.
-If the weather is hot/sunny, generate light, refreshing, or hydrating dishes.
-If some criteria are not specified, ignore them.
-Combine mood and weather for a well-balanced suggestion.
-Using the user's past ratings, make one that they will like.
-After generating the recipe, assign tags from the following allowed list ONLY. Do not create new tags.
-Allowed Tags:
-Breakfast, Lunch, Dinner, Snack, Vegetarian, Vegan, Gluten-Free, Low-Carb, High-Protein, Comfort Food, Spicy, Sweet, Keto, Paleo, Healthy, Quick, Italian, Asian, Mexican, American
+Recipe Guidelines:
+------------------
+- For happy/energetic moods: Create vibrant, fresh recipes
+- For tired/stressed moods: Create simple, comforting recipes
+- For sad moods: Create cozy, uplifting recipes
+- For cold/rainy weather: Create warm, hearty recipes
+- For hot/sunny weather: Create light, refreshing recipes
+- Consider both mood and weather for balance
+- Use past ratings to inform the suggestion
 
-Choose tags that best describe the recipe based on its content (e.g. meal type, cuisine, dietary style). Provide them at the end of the recipe in this format:
-**Tags:** Tag1, Tag2, Tag3
+Format:
+Recipe name (do not include the words "Recipe name" in the output)
+Description
+Ingredients
+Instructions
 
-Generate a recipe. Do not speak in a conversational tone.
-IMPORTANT: Only suggest recipes that can be made with the available utensils. If specific utensils are required but not available, do not suggest that recipe.`;
+Tags:
+Choose from: Breakfast, Lunch, Dinner, Snack, Vegetarian, Vegan, Gluten-Free, Low-Carb, High-Protein, Comfort Food, Spicy, Sweet, Keto, Paleo, Healthy, Quick, Italian, Asian, Mexican, American
+
+End the recipe with:
+TAGS: Tag1, Tag2, Tag3
+
+Important: Only suggest recipes that can be made with the available utensils. Do not include any analysis of the weather or mood in the output.`;
   };
 
   const generateResponse = async () => {

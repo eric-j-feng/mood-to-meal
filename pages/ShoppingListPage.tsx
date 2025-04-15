@@ -67,7 +67,7 @@ const ShoppingListPage: React.FC = () => {
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <div className={`bg-[url('/assets/texture.jpg')] mx-auto p-6 ${myFont.className}`}>
+    <div className={`bg-[url('/assets/texture.jpg')] min-h-screen mx-auto p-6 ${myFont.className}`}>
       <h1 className="text-4xl font-bold text-center text-green-2000 mb-4">Shopping List</h1>
       {shoppingList.length > 0 ? (
         <ul className="pl-5">

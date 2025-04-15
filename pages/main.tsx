@@ -124,6 +124,8 @@ const Main = () => {
   const [manualLocationInput, setManualLocationInput] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [hasManualLocation, setHasManualLocation] = useState(false);
+  const [weatherError, setWeatherError] = useState<string | null>(null);
+  const [isLoadingWeather, setIsLoadingWeather] = useState(false);
 
   const handleCitySelect = (city: string) => {
     setSelectedCity(city);
@@ -166,26 +168,35 @@ const Main = () => {
   const handleManualWeatherSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedCity && selectedState) {
+      setIsLoadingWeather(true);
+      setWeatherError(null);
       try {
         const weatherData = await getWeather(selectedCity, selectedState, false);
         if (weatherData) {
           setWeather(weatherData);
           setManualLocationInput(false);
           setHasManualLocation(true);
+          setWeatherError(null);
         }
       } catch (error) {
         console.error("Error fetching weather:", error);
+        setWeatherError(error instanceof Error ? error.message : 'Failed to fetch weather data');
+      } finally {
+        setIsLoadingWeather(false);
       }
     }
   };
 
   useEffect(() => {
     const fetchWeather = async () => {
-      try {
-        if (manualLocationInput) {
-          return;
-        }
+      if (manualLocationInput) {
+        return;
+      }
 
+      setIsLoadingWeather(true);
+      setWeatherError(null);
+      
+      try {
         let weatherData;
         
         if (hasManualLocation && selectedCity && selectedState) {
@@ -198,17 +209,20 @@ const Main = () => {
             if (!hasManualLocation && selectedCity && selectedState) {
               weatherData = await getWeather(selectedCity, selectedState, false);
             } else {
-              console.log("No location available");
-              return;
+              throw new Error('Unable to get location. Please enter your location manually.');
             }
           }
         }
 
         if (weatherData) {
           setWeather(weatherData);
+          setWeatherError(null);
         }
       } catch (error) {
         console.error("Error fetching weather:", error);
+        setWeatherError(error instanceof Error ? error.message : 'Failed to fetch weather data');
+      } finally {
+        setIsLoadingWeather(false);
       }
     };
     
@@ -365,10 +379,18 @@ const Main = () => {
                         )}
                         <button
                           onClick={handleManualWeatherSubmit}
-                          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md font-semibold shadow hover:bg-blue-600 transition"
+                          disabled={isLoadingWeather || !selectedCity || !selectedState}
+                          className={`mt-4 px-4 py-2 ${
+                            isLoadingWeather || !selectedCity || !selectedState
+                              ? 'bg-gray-400 cursor-not-allowed'
+                              : 'bg-blue-500 hover:bg-blue-600'
+                          } text-white rounded-md font-semibold shadow transition`}
                         >
-                          Submit Location
+                          {isLoadingWeather ? "Loading..." : "Submit Location"}
                         </button>
+                        {weatherError && (
+                          <p className="mt-2 text-red-500">{weatherError}</p>
+                        )}
                         <>  </>
                         <button
                           onClick={handleUseAutomaticLocation}
@@ -379,7 +401,11 @@ const Main = () => {
                       </>
                     ) : (
                       <>
-                        {weather ? (
+                        {isLoadingWeather ? (
+                          <div className="flex items-center justify-center py-4">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                          </div>
+                        ) : weather ? (
                           <>
                             <h4 className="text-xl font-semibold text-gray-800 mb-2">
                               Weather in {weather.cityName}
@@ -398,7 +424,7 @@ const Main = () => {
                         ) : (
                           <>
                             <h4 className="text-xl font-semibold text-gray-800 mb-2">
-                              Weather data not available
+                              {weatherError || "Weather data not available"}
                             </h4>
                             <button
                               onClick={() => setManualLocationInput(true)}

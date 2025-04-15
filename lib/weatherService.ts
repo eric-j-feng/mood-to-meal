@@ -1,11 +1,16 @@
 // Add this new function to get user's current position
 export function getCurrentPosition(useCurrentLocation: boolean): Promise<GeolocationPosition> {
   return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) {
-      reject(new Error('Geolocation is not supported by your browser'));
-      useCurrentLocation = false;
+    if (!useCurrentLocation || !navigator.geolocation) {
+      reject(new Error('Geolocation is not supported or disabled'));
     } else {
-      navigator.geolocation.getCurrentPosition(resolve, reject);
+      navigator.geolocation.getCurrentPosition(resolve, (error) => {
+        console.error("Geolocation error:", error);
+        reject(new Error('Unable to get your location. Please try manual input.'));
+      }, {
+        timeout: 10000,
+        enableHighAccuracy: false
+      });
     }
   });
 }
@@ -14,7 +19,12 @@ export async function getCoordinates(selectedCity: string | null, selectedState:
   try {
     // Validate inputs
     if (!selectedCity?.trim() || !selectedState?.trim()) {
-      return null;  // Return null instead of throwing error to handle partial input
+      throw new Error('City and state are required');
+    }
+
+    const apikey = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY;
+    if (!apikey) {
+      throw new Error('Weather API key is not configured');
     }
 
     console.log("Fetching coordinates...");
@@ -22,27 +32,26 @@ export async function getCoordinates(selectedCity: string | null, selectedState:
     // URL encode the city and state parameters
     const encodedCity = encodeURIComponent(selectedCity.trim());
     const encodedState = encodeURIComponent(selectedState.trim());
-    const apikey = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY;
 
-    const geocodeUrl = `http://api.openweathermap.org/geo/1.0/direct?q=${encodedCity},${encodedState},US&limit=1&appid=${apikey}`;
+    const geocodeUrl = `https://api.openweathermap.org/geo/1.0/direct?q=${encodedCity},${encodedState},US&limit=1&appid=${apikey}`;
     const response = await fetch(geocodeUrl);
     
     if (!response.ok) {
       const errorDetails = await response.text();
-      throw new Error(`Geocoding response was not ok: ${response.status} - ${errorDetails}`);
+      throw new Error(`Location not found: ${response.status} - ${errorDetails}`);
     }
 
     const data = await response.json();
     
     if (!data || data.length === 0) {
-      return null;
+      throw new Error('Location not found');
     }
 
     const latFetched = data[0]?.lat;
     const lonFetched = data[0]?.lon;
 
     if (!latFetched || !lonFetched) {
-      return null;
+      throw new Error('Invalid coordinates received');
     }
 
     return { latFetched, lonFetched };
@@ -58,46 +67,59 @@ export async function getWeather(
   useCurrentLocation: boolean = true 
 ) {
   try {
+    const apikey = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY;
+    if (!apikey) {
+      throw new Error('Weather API key is not configured');
+    }
+
     let latFetched: number;
     let lonFetched: number;
 
     if (useCurrentLocation) {
       // Get coordinates from browser's geolocation
-      const position = await getCurrentPosition(useCurrentLocation);
-      latFetched = position.coords.latitude;
-      lonFetched = position.coords.longitude;
+      try {
+        const position = await getCurrentPosition(useCurrentLocation);
+        latFetched = position.coords.latitude;
+        lonFetched = position.coords.longitude;
+      } catch (error) {
+        console.error("Geolocation failed:", error);
+        throw new Error('Unable to get your location. Please try manual input.');
+      }
     } else {
       // Use existing city/state lookup
       const coords = await getCoordinates(selectedCity, selectedState);
       if (!coords) {
-        return null;
+        throw new Error('Unable to find coordinates for the specified location');
       }
       latFetched = coords.latFetched;
       lonFetched = coords.lonFetched;
     }
 
-    const apikey = process.env.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY;
     console.log("Using coordinates:", latFetched, lonFetched);
     
-    const weatherUrl = `http://api.openweathermap.org/data/2.5/weather?lat=${latFetched}&lon=${lonFetched}&appid=${apikey}&units=imperial`;
+    const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${latFetched}&lon=${lonFetched}&appid=${apikey}&units=imperial`;
     const response = await fetch(weatherUrl);
     
     if (!response.ok) {
       const errorDetails = await response.text();
-      throw new Error(`Weather response was not ok: ${response.status} - ${errorDetails}`);
+      throw new Error(`Weather data not available: ${response.status} - ${errorDetails}`);
     }
 
     const data = await response.json();
     
+    if (!data || !data.main || !data.weather || !data.weather[0]) {
+      throw new Error('Invalid weather data received');
+    }
+
     return {
-      temperature: data.main.temp,
+      temperature: Math.round(data.main.temp), // Round to nearest degree
       weatherDescription: data.weather[0].description,
       humidity: data.main.humidity,
       windSpeed: data.wind.speed,
       cityName: data.name,
     };
   } catch (error) {
-    console.error("Error fetching forecast data:", error);
+    console.error("Error fetching weather data:", error);
     throw error;
   }
 }

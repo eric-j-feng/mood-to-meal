@@ -121,35 +121,18 @@ const Main = () => {
   const [loading, setLoading] = useState(true);
   const [manualWeatherInput, setManualWeatherInput] = useState(false);
   const [manualWeatherData, setManualWeatherData] = useState<WeatherData | null>(null);
-  const [manualLocationInput, setManualLocationInput] = useState(false); // State to toggle manual location input
+  const [manualLocationInput, setManualLocationInput] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [hasManualLocation, setHasManualLocation] = useState(false);
 
   const handleCitySelect = (city: string) => {
     setSelectedCity(city);
     console.log("City selected:", city);
-
-    // Fetch weather if both city and state are selected
-    if (city && selectedState) {
-      fetchWeather(city, selectedState);
-    }
   };
 
-  const debounceTimeout = useRef<NodeJS.Timeout | null>(null); // Ref to store the timeout
-
   const handleStateSelect = (state: string) => {
-    if (debounceTimeout.current) {
-      clearTimeout(debounceTimeout.current); // Clear the previous timeout
-    }
-
-    debounceTimeout.current = setTimeout(() => {
-      setSelectedState(state);
-      console.log("State selected:", state);
-
-      // Fetch weather if both city and state are selected
-      if (selectedCity && state) {
-        fetchWeather(selectedCity, state);
-      }
-    }, 500); // Delay of 500ms
+    setSelectedState(state);
+    console.log("State selected:", state);
   };
 
   const handleCookTimeSelect = (cookTime: string) => {
@@ -188,6 +171,7 @@ const Main = () => {
         if (weatherData) {
           setWeather(weatherData);
           setManualLocationInput(false);
+          setHasManualLocation(true);
         }
       } catch (error) {
         console.error("Error fetching weather:", error);
@@ -195,34 +179,28 @@ const Main = () => {
     }
   };
 
-  const fetchWeather = async (city: string | null, state: string | null) => {
-    try {
-      const weatherData = await getWeather(city, state, false); // Fetch weather using city and state
-      if (weatherData) {
-        setWeather(weatherData);
-        console.log("Weather updated:", weatherData);
-      }
-    } catch (error) {
-      console.error("Error fetching weather:", error);
-    }
-  };
-
   useEffect(() => {
     const fetchWeather = async () => {
       try {
+        if (manualLocationInput) {
+          return;
+        }
+
         let weatherData;
         
-        // First trying to get weather using geolocation
-        try {
-          weatherData = await getWeather(null, null, true);
-        } catch (geoError) {
-          console.log("Geolocation failed, falling back to city/state:", geoError);
-          // Fall back to city/state if geolocation fails
-          if (selectedCity && selectedState) {
-            weatherData = await getWeather(selectedCity, selectedState, false);
-          } else {
-            console.log("City and state not selected");
-            return;
+        if (hasManualLocation && selectedCity && selectedState) {
+          weatherData = await getWeather(selectedCity, selectedState, false);
+        } else {
+          try {
+            weatherData = await getWeather(null, null, true);
+          } catch (geoError) {
+            console.log("Geolocation failed:", geoError);
+            if (!hasManualLocation && selectedCity && selectedState) {
+              weatherData = await getWeather(selectedCity, selectedState, false);
+            } else {
+              console.log("No location available");
+              return;
+            }
           }
         }
 
@@ -235,7 +213,8 @@ const Main = () => {
     };
     
     fetchWeather();
-  }, [selectedCity, selectedState]);
+  }, [selectedCity, selectedState, manualLocationInput, hasManualLocation]);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -277,6 +256,13 @@ const Main = () => {
 
     savePreferences();
   }, [user, selectedCity, selectedState, selectedMood, selectedCookTime]);
+
+  const handleUseAutomaticLocation = () => {
+    setManualLocationInput(false);
+    setHasManualLocation(false);
+    setSelectedCity(null);
+    setSelectedState(null);
+  };
 
   if (loading) {
     return (
@@ -356,89 +342,75 @@ const Main = () => {
                   </div>
 
                   {/* Weather Selection */}
-                  {manualLocationInput ? (
-                    <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
-                      <h4 className="text-xl font-semibold text-gray-800 mb-4">
-                        Enter your city and state:
-                      </h4>
-                      <CitySelector city={selectedCity} setCity={handleCitySelect} />
-                      {selectedCity && (
-                        <p className="mt-4 text-gray-800">
-                          Your City: {selectedCity}
-                        </p>
-                      )}
-                      <StateSelector
-                        state={selectedState}
-                        setState={handleStateSelect}
-                      />
-                      {selectedState && (
-                        <p className="mt-4 text-gray-800">
-                          Your State: {selectedState}
-                        </p>
-                      )}
-                      <button
-                        onClick={handleManualWeatherSubmit}
-                        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md font-semibold shadow hover:bg-blue-600 transition"
-                      >
-                        Submit Location
-                      </button>
-                      <>  </>
-                      <button
-                        onClick={() => setManualLocationInput(false)}
-                        className="mt-4 px-4 py-2 bg-gray-500 text-white rounded-md font-semibold shadow hover:bg-gray-600 transition"
-                      >
-                        Use Automatic Location
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      {weather ? (
-                        <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
-                          <h4 className="text-xl font-semibold text-gray-800 mb-2">
-                            Weather in {weather.cityName}
-                          </h4>
-                          <p className="text-gray-600">Temperature: {weather.temperature}°F</p>
-                          <p className="text-gray-600">Description: {weather.weatherDescription}</p>
-                          <p className="text-gray-600">Humidity: {weather.humidity}%</p>
-                          <p className="text-gray-600">Wind Speed: {weather.windSpeed} m/s</p>
-                          <button
-                            onClick={() => setManualLocationInput(true)}
-                            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md font-semibold shadow hover:bg-blue-600 transition"
-                          >
-                            Enter Location Manually
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
-                          <h4 className="text-xl font-semibold text-gray-800 mb-2">
-                            Weather data not available
-                          </h4>
-                          <button
-                            onClick={() => setManualLocationInput(true)}
-                            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md font-semibold shadow hover:bg-blue-600 transition"
-                          >
-                            Enter Location Manually
-                          </button>
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                  {/* Dietary Selection */}
-                  {/* <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
-                    <h4 className="text-xl font-semibold text-gray-800 mb-4">
-                      Dietary Restrictions:
-                    </h4>
-                    <DietarySelector
-                      selectedRestrictions={dietaryRestrictions}
-                      onChange={handleDietaryChange}
-                    />
-                    {dietaryRestrictions.length > 0 && (
-                      <p className="mt-4 text-green-600">
-                        You selected: {dietaryRestrictions.join(", ")}
-                      </p>
+                  <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
+                    {manualLocationInput ? (
+                      <>
+                        <h4 className="text-xl font-semibold text-gray-800 mb-4">
+                          Enter your city and state:
+                        </h4>
+                        <CitySelector city={selectedCity} setCity={handleCitySelect} />
+                        {selectedCity && (
+                          <p className="mt-4 text-gray-800">
+                            Your City: {selectedCity}
+                          </p>
+                        )}
+                        <StateSelector
+                          state={selectedState}
+                          setState={handleStateSelect}
+                        />
+                        {selectedState && (
+                          <p className="mt-4 text-gray-800">
+                            Your State: {selectedState}
+                          </p>
+                        )}
+                        <button
+                          onClick={handleManualWeatherSubmit}
+                          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md font-semibold shadow hover:bg-blue-600 transition"
+                        >
+                          Submit Location
+                        </button>
+                        <>  </>
+                        <button
+                          onClick={handleUseAutomaticLocation}
+                          className="mt-4 px-4 py-2 bg-gray-500 text-white rounded-md font-semibold shadow hover:bg-gray-600 transition"
+                        >
+                          Use Automatic Location
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        {weather ? (
+                          <>
+                            <h4 className="text-xl font-semibold text-gray-800 mb-2">
+                              Weather in {weather.cityName}
+                            </h4>
+                            <p className="text-gray-600">Temperature: {weather.temperature}°F</p>
+                            <p className="text-gray-600">Description: {weather.weatherDescription}</p>
+                            <p className="text-gray-600">Humidity: {weather.humidity}%</p>
+                            <p className="text-gray-600">Wind Speed: {weather.windSpeed} m/s</p>
+                            <button
+                              onClick={() => setManualLocationInput(true)}
+                              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md font-semibold shadow hover:bg-blue-600 transition"
+                            >
+                              Enter Location Manually
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <h4 className="text-xl font-semibold text-gray-800 mb-2">
+                              Weather data not available
+                            </h4>
+                            <button
+                              onClick={() => setManualLocationInput(true)}
+                              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md font-semibold shadow hover:bg-blue-600 transition"
+                            >
+                              Enter Location Manually
+                            </button>
+                          </>
+                        )}
+                      </>
                     )}
-                  </div> */}
+                  </div>
 
                   {/* Cook Time Selector */}
                   <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
@@ -455,9 +427,6 @@ const Main = () => {
                     )}
                   </div>
 
-
-
-
                   {/* Type of Meal Selector */}
                   <div className="bg-white shadow-lg rounded-2xl p-6 mb-8">
                     <h4 className="text-xl font-semibold text-gray-800 mb-4">
@@ -467,12 +436,11 @@ const Main = () => {
                       meal={selectedMealType}
                       setMeal={handleMealTypeSelect}
                     />
-                  
                   </div>
                 </>
               )}
 
-              {/* Move collapse button to bottom left */}
+              {/* Collapse button - always visible */}
               <div className="mt-6 flex justify-start">
                 <button
                   onClick={() => setIsCollapsed(!isCollapsed)}

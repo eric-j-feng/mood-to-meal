@@ -40,7 +40,6 @@ const GeminiChat: React.FC<GeminiChatProps> = ({
   const [response, setResponse] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
-  const [showPrompt, setShowPrompt] = useState(false);
   const [userPreferences, setUserPreferences] = useState<UserPreferences>({});
   const [userRecipes, setUserRecipes] = useState<UserRecipe[]>([]);
   const [prompt, setPrompt] = useState<string>("");
@@ -196,21 +195,6 @@ IMPORTANT: Only suggest recipes that can be made with the available utensils. If
 
   return (
     <div className="p-4">
-      <div className="mb-4">
-        <button
-          onClick={() => setShowPrompt(!showPrompt)}
-          className="text-blue-500 hover:text-blue-700 underline mb-2"
-        >
-          {showPrompt ? "Hide Prompt" : "Show Prompt"}
-        </button>
-
-        {showPrompt && (
-          <div className="bg-gray-100 p-4 rounded-lg whitespace-pre-wrap font-mono text-sm">
-            {prompt}
-          </div>
-        )}
-      </div>
-
       <button
         onClick={generateResponse}
         className="bg-blue-500 text-white px-4 py-2 rounded"
@@ -226,8 +210,8 @@ IMPORTANT: Only suggest recipes that can be made with the available utensils. If
           <Recipes 
             geminiSuggestion={response}
             modifyRecipe={modifyRecipe}
-            selectedCity={null} // Replace with actual value or state
-            selectedState={null} // Replace with actual value or state
+            selectedCity={null}
+            selectedState={null}
             selectedMood={selectedMood}
             selectedCookTime={selectedCookTime ?? null}
           />

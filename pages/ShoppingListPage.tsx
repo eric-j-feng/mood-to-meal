@@ -3,6 +3,13 @@ import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/auth/firebase";
 import { getAuth } from "firebase/auth";
+import { Poppins} from "next/font/google";
+const myFont = Poppins({
+  weight:['400'],
+  subsets: ['latin']
+})
+
+
 
 const ShoppingListPage: React.FC = () => {
   const router = useRouter();
@@ -60,8 +67,8 @@ const ShoppingListPage: React.FC = () => {
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Shopping List</h1>
+    <div className={`bg-[url('/assets/texture.jpg')] mx-auto p-6 ${myFont.className}`}>
+      <h1 className="text-4xl font-bold text-center text-green-2000 mb-4">Shopping List</h1>
       {shoppingList.length > 0 ? (
         <ul className="pl-5">
           {shoppingList.map((item, index) => (
